@@ -2,15 +2,15 @@
   "name": "Gold Square",
   "short_name": "Square",
   "icons": [{
-        "src": "/TestWebApp/giftMedium.png",
+        "src": "/Controller/TestWebApp/giftMedium.png",
         "sizes": "128x128",
         "type": "image/webp"
       }, {
-        "src": "/TestWebApp/giftLarge.png",
+        "src": "/Controller/TestWebApp/giftLarge.png",
         "sizes": "512x512"
       }],
-  "scope": "/TestWebApp",
-  "start_url": "/TestWebApp/index.html",
+  "scope": "/Controller/TestWebApp",
+  "start_url": "/Controller/TestWebApp/index.html",
   "display": "fullscreen",
   "orientation": "landscape",
   "background_color": "#3367D6",
