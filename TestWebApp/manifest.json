@@ -10,7 +10,7 @@
         "sizes": "512x512",
         "type": "image/png"
       }],
-  "scope": "/",
+  "scope": "/Controller/TestWebApp/",
   "start_url": "/index.html",
   "display": "fullscreen",
   "orientation": "landscape",
