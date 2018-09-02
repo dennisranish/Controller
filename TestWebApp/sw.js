@@ -1,4 +1,4 @@
-/*var CACHE_NAME = 'site-cache-v1';
+var CACHE_NAME = 'site-cache-v1';
 var urlsToCache = [
     '/Controller/TestWebApp/',
     '/Controller/TestWebApp/index.html',
@@ -26,4 +26,4 @@ self.addEventListener('fetch', function(event)
         if (response) return response;
         return fetch(event.request);
     }));
-  });*/
+  });
