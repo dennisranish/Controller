@@ -1,10 +1,11 @@
 var CACHE_NAME = 'site-cache-v1';
 var urlsToCache = [
-  '/index.html',
-  '/manifest.json',
-  '/app.js',
-  '/giftMedium.png',
-  '/giftLarge.png'
+    '/',
+    '/index.html',
+    '/manifest.json',
+    '/app.js',
+    '/giftMedium.png',
+    '/giftLarge.png'
 ];
 
 self.addEventListener('install', function(event)
@@ -21,10 +22,8 @@ self.addEventListener('fetch', function(event)
 {
     event.respondWith(caches.match(event.request).then(function(response)
     {
-          // Cache hit - return response
-          if (response) return response;
-          return fetch(event.request);
-        }
-      )
-    );
+        // Cache hit - return response
+        if (response) return response;
+        return fetch(event.request);
+    }));
   });
