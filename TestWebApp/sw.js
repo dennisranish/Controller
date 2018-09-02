@@ -1,11 +1,11 @@
 var CACHE_NAME = 'site-cache-v1';
 var urlsToCache = [
-    '/',
-    '/index.html',
-    '/manifest.json',
-    '/app.js',
-    '/giftMedium.png',
-    '/giftLarge.png'
+    '/Controller/TestWebApp/',
+    '/Controller/TestWebApp/index.html',
+    '/Controller/TestWebApp/manifest.json',
+    '/Controller/TestWebApp/app.js',
+    '/Controller/TestWebApp/giftMedium.png',
+    '/Controller/TestWebApp/giftLarge.png'
 ];
 
 self.addEventListener('install', function(event)
