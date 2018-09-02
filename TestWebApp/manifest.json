@@ -1,0 +1,19 @@
+{
+  "name": "Gold Square",
+  "short_name": "Square",
+  "icons": [{
+        "src": "/giftMedium.png",
+        "sizes": "128x128",
+        "type": "image/png"
+      }, {
+        "src": "/giftLarge.png",
+        "sizes": "512x512",
+        "type": "image/png"
+      }],
+  "scope": "/",
+  "start_url": "/index.html",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#3367D6",
+  "theme_color": "#3367D6"
+}
