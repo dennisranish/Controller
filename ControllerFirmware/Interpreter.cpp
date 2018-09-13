@@ -6,144 +6,109 @@ Interpreter::Interpreter()
 
 void Interpreter::setProgram(char* programCode)
 {
-	unsigned int* tokenPointer;
+	unsigned int* tokenStart = (unsigned int*)malloc(400);
+	unsigned int* tokenEnd = (unsigned int*)malloc(400);
+
 	unsigned int tokenCount = 0;
-
-	unsigned int tokenLength = 0;
-
-	/*
-	0-white space: not add into tokens: ' ', '\n', (tab)
-	1-special characters: each is in it's own token: {}().;
-	2-alphabatic characters: on type change create new token: a-z, A-Z, 0-9, _
-	3-all other symbols: on type change create new token
-	*/
+	unsigned int reservedTokenCount = 100;
 
 	unsigned int characterType = 0;
 
-	for(int i = 0; programCode[i] != '\0'; i++)
+	for(int i = 0; true; i++)
 	{
-		Serial.println();
-		Serial.print(i);
-		Serial.print(" : ");
-		Serial.print(programCode[i]);
-		Serial.print(" : ");
-		Serial.print("1,");
+		if(programCode[i] == '\0')
+		{
+			tokenEnd[tokenCount - 1] = i - 1;
+			break;
+		}
+		
 		unsigned int newCharacterType = 0;
 		char a = programCode[i];
 
 		if(a == ' ' || a == '\n' || a == '\t') newCharacterType = 0;
-		else if(a == '{' || a == '}' || a == '(' || a == ')' || a == '.' || a == ';') newCharacterType = 1;
-		else if((a >= 65 && a <= 90) || (a >= 97 && a <= 122) || (a >= 48 && a <= 57) || a == 95) newCharacterType = 2;
+		else if(a == '{' || a == '}' || a == '(' || a == ')' || a == '[' || a == ']' || a == '.' || a == ';') newCharacterType = 1;
+		else if((a >= 'a' && a <= 'z') || (a >= 'A' && a <= 'Z') || (a >= '0' && a <= '9') || a == '_') newCharacterType = 2;
 		else newCharacterType = 3;
 
-		Serial.print("2,");
-		
-		if(newCharacterType == 0)
+		if(newCharacterType != characterType)
 		{
-			characterType = newCharacterType;
-			continue;
-		}
-
-		Serial.print("3,");
-		
-		if(newCharacterType != characterType || newCharacterType == 1)
-		{
-			Serial.print("4,");
-			if(tokenCount > 0)
+			if(tokenCount > 0 && characterType != 0) tokenEnd[tokenCount - 1] = i - 1;
+			if(newCharacterType != 0)
 			{
-				Serial.print("5,");
-				tokenPointer[tokenCount - 1] = (unsigned int)realloc((unsigned int*)tokenPointer[tokenCount - 1], tokenLength + 1);
-				((byte*)tokenPointer[tokenCount - 1])[tokenLength] = '\0';
-				Serial.print("6,");
+				if(tokenCount >= reservedTokenCount)
+				{
+					tokenStart = (unsigned int*)realloc(tokenStart, reservedTokenCount * 4 + 400);
+					tokenEnd = (unsigned int*)realloc(tokenEnd, reservedTokenCount * 4 + 400);
+
+					reservedTokenCount += 100;
+				}
+				
+				tokenCount++;
+				tokenStart[tokenCount - 1] = i;
 			}
-			Serial.print("7,");
-			if(tokenCount == 0) tokenPointer = (unsigned int*)malloc(tokenCount + 1);
-			else tokenPointer = (unsigned int*)realloc(tokenPointer, tokenCount + 1);
-			tokenCount++;
-			tokenLength = 0;
+
 			characterType = newCharacterType;
-			Serial.print("8,");
 		}
-
-		Serial.print("9,t: ");
-		Serial.print(tokenLength);
-		if(tokenLength == 0) tokenPointer[tokenCount - 1] = (unsigned int)malloc(1);
-		else tokenPointer[tokenCount - 1] = (unsigned int)realloc((unsigned int*)tokenPointer[tokenCount - 1], tokenLength + 1);Serial.print("10,");
-		((byte*)tokenPointer[tokenCount - 1])[tokenLength] = programCode[i];Serial.print("11,");
-		tokenLength++;
-		Serial.print("12,");
 	}
-	tokenPointer[tokenCount - 1] = (unsigned int)realloc((unsigned int*)tokenPointer[tokenCount - 1], ++tokenLength);
-	((byte*)tokenPointer[tokenCount - 1])[tokenLength - 1] = '\0';
 
-	/*int i = 0;
-	while(programCode[i] != '\0')
+	tokenStart = (unsigned int*)realloc(tokenStart, tokenCount * 4);
+	tokenEnd = (unsigned int*)realloc(tokenEnd, tokenCount * 4);
+	
+	//if = ifnot() *jumpPos*, {jump *jumpPos*}
+	//else if = ifnot() *jumpPos*, {jump *jumpPos*}
+	//else = {}
+	//while = ifnot() *jumpPos*, {}, jump *jumpPos back*
+	//for = declare statment, ifnot() *jumpPos*, {}, jump *jumpPos back*
+	
+
+	programTokens = (unsigned int*)malloc(tokenCount * 4);
+	programTokensCount = tokenCount;
+
+	lookupTable = (unsigned int*)malloc(400);
+
+	unsigned int reservedLookupTableCount = 100;
+
+	for(int a = 0; a < tokenCount; a++)
 	{
-		if(programCode[i] == ' ' || programCode[i] == '\n' || programCode[i] == '\t') characterType = 0;
-		else if(programCode[i] == '{' || programCode[i] == '}' || programCode[i] == '(' || programCode[i] == ')' || programCode[i] == '.' || programCode[i] == ';')
-		{
-			if(tokenCount > 0)
-			{
-				tokenPointer[tokenCount - 1] = (unsigned int)realloc((unsigned int*)tokenPointer[tokenCount - 1], tokenLength * 4 + 4);
-				((byte*)tokenPointer[tokenCount - 1])[tokenLength] = '\0';
-			}
-			tokenPointer = (unsigned int*)realloc(tokenPointer, tokenCount * 4 + 4);
-			tokenCount++;
-			tokenLength = 0;
+		char* tokenValue = (char*)malloc((tokenEnd[a] - tokenStart[a]) + 2);
 
-			characterType = 1;
-			if(tokenLength == 0) tokenPointer[tokenCount - 1] = (unsigned int)malloc(4);
-			else tokenPointer[tokenCount - 1] = (unsigned int)realloc((unsigned int*)tokenPointer[tokenCount - 1], tokenLength * 4 + 4);
-			((byte*)tokenPointer[tokenCount - 1])[tokenLength] = programCode[i];
-			tokenLength++;
-		}
-		else if((programCode[i] >= 65 && programCode[i] <= 90) || (programCode[i] >= 97 && programCode[i] <= 122) || (programCode[i] >= 48 && programCode[i] <= 57) || programCode[i] == 95)
-		{
-			if(characterType != 2)
-			{
-				if(tokenCount > 0)
-				{
-					tokenPointer[tokenCount - 1] = (unsigned int)realloc((unsigned int*)tokenPointer[tokenCount - 1], tokenLength * 4 + 4);
-					((byte*)tokenPointer[tokenCount - 1])[tokenLength] = '\0';
-				}
-				tokenPointer = (unsigned int*)realloc(tokenPointer, tokenCount * 4 + 4);
-				tokenCount++;
-				tokenLength = 0;
-			}
+		for(int i = 0; i <= tokenEnd[a] - tokenStart[a]; i++) tokenValue[i] = programCode[tokenStart[a] + i];
+		tokenValue[(tokenEnd[a] - tokenStart[a]) + 1] = '\0';
 
-			characterType = 2;
-			if(tokenLength == 0) tokenPointer[tokenCount - 1] = (unsigned int)malloc(4);
-			else tokenPointer[tokenCount - 1] = (unsigned int)realloc((unsigned int*)tokenPointer[tokenCount - 1], tokenLength * 4 + 4);
-			((byte*)tokenPointer[tokenCount - 1])[tokenLength] = programCode[i];
-			tokenLength++;
-		}
-		else
-		{
-			if(characterType != 3)
-			{
-				if(tokenCount > 0)
-				{
-					tokenPointer[tokenCount - 1] = (unsigned int)realloc((unsigned int*)tokenPointer[tokenCount - 1], tokenLength * 4 + 4);
-					((byte*)tokenPointer[tokenCount - 1])[tokenLength] = '\0';
-				}
-				tokenPointer = (unsigned int*)realloc(tokenPointer, tokenCount * 4 + 4);
-				tokenCount++;
-				tokenLength = 0;
-			}
+		bool isTokenInLookupTable = false;
 
-			characterType = 3;
-			if(tokenLength == 0) tokenPointer[tokenCount - 1] = (unsigned int)malloc(4);
-			else tokenPointer[tokenCount - 1] = (unsigned int)realloc((unsigned int*)tokenPointer[tokenCount - 1], tokenLength * 4 + 4);
-			((byte*)tokenPointer[tokenCount - 1])[tokenLength] = programCode[i];
-			tokenLength++;
+		for(int i = 0; i < lookupTableCount; i++)
+		{
+			if(strcmp(tokenValue, (char*)lookupTable[i]) == 0)
+			{
+				programTokens[a] = i;
+				isTokenInLookupTable = true;
+				free(tokenValue);
+				break;
+			}
 		}
 
-		i++;
+		if(!isTokenInLookupTable)
+		{
+			if(lookupTableCount >= reservedLookupTableCount)
+			{
+				lookupTable = (unsigned int*)realloc(lookupTable, reservedLookupTableCount * 4 + 400);
+
+				reservedLookupTableCount += 100;
+			}
+			
+			lookupTableCount++;
+			lookupTable[lookupTableCount - 1] = (unsigned int)tokenValue;
+			programTokens[a] = lookupTableCount - 1;
+		}
 	}
-	tokenPointer[tokenCount - 1] = (unsigned int)realloc((unsigned int*)tokenPointer[tokenCount - 1], tokenLength * 4 + 4);
-	((byte*)tokenPointer[tokenCount - 1])[tokenLength] = '\0';*/
 
-	for(int a = 0; a < tokenCount; a++) Serial.println((char*)tokenPointer[a]);
+	lookupTable = (unsigned int*)realloc(lookupTable, lookupTableCount * 4);
+
+	/*for(int a = 0; a < programTokensCount; a++)
+	{
+		Serial.println((char*)lookupTable[programTokens[a]]);
+	}*/
 }
 
 void Interpreter::error(char errorMessage[])

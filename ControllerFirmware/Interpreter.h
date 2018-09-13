@@ -6,8 +6,10 @@
 class Interpreter
 {
 	public:
-		//unsigned int* tokenPointer;
-		//unsigned int numberOfTokens = 0;
+		unsigned int* programTokens;
+		unsigned int programTokensCount = 0;
+		unsigned int* lookupTable; //Pointers to char arrays (0 terminated)
+		unsigned int lookupTableCount = 0;
 		
 		//unsigned int* stackScopePointer;
 		//unsigned int numberOfStacks = 0;
