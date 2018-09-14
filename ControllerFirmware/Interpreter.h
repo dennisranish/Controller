@@ -9,6 +9,7 @@ class Interpreter
 		unsigned int* programTokens;
 		unsigned int programTokensCount = 0;
 		unsigned int* lookupTable; //Pointers to char arrays (0 terminated)
+		byte* lookupTableType;
 		unsigned int lookupTableCount = 0;
 		
 		//unsigned int* stackScopePointer;

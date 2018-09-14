@@ -12,9 +12,9 @@ void Interpreter::setProgram(char* programCode)
 	unsigned int tokenCount = 0;
 	unsigned int reservedTokenCount = 100;
 
-	unsigned int characterType = 0;
+	unsigned int characterType = 4;
 
-	for(int i = 0; true; i++)
+	for(unsigned int i = 0; true; i++)
 	{
 		if(programCode[i] == '\0')
 		{
@@ -24,16 +24,34 @@ void Interpreter::setProgram(char* programCode)
 		
 		unsigned int newCharacterType = 0;
 		char a = programCode[i];
+		char b = 0;
+		char c = 0;
 
-		if(a == ' ' || a == '\n' || a == '\t') newCharacterType = 0;
-		else if(a == '{' || a == '}' || a == '(' || a == ')' || a == '[' || a == ']' || a == '.' || a == ';') newCharacterType = 1;
-		else if((a >= 'a' && a <= 'z') || (a >= 'A' && a <= 'Z') || (a >= '0' && a <= '9') || a == '_') newCharacterType = 2;
-		else newCharacterType = 3;
+		if(i >= 1) b = programCode[i - 1];
+		if(i >= 2) c = programCode[i - 2];
 
-		if(newCharacterType != characterType)
+		//Comments
+		if(a == '/' && programCode[i + 1] == '/' && characterType > 1 && characterType != 2 && characterType != 3) newCharacterType = 0;
+		else if(a == '/' && programCode[i + 1] == '*' && characterType > 1 && characterType != 2 && characterType != 3) newCharacterType = 1;
+		else if(characterType == 0 && b != '\n') newCharacterType = 0;
+		else if(characterType == 1 && (c != '*' || b != '/')) newCharacterType = 1;
+
+		//Strings
+		else if(a == '"') newCharacterType = 2;
+		else if(characterType == 2 && (b != '"' || c == '\\' || (i - tokenStart[tokenCount - 1]) == 1)) newCharacterType = 2;
+		else if(a == '\'') newCharacterType = 3;
+		else if(characterType == 3 && (b != '\'' || c == '\\' || (i - tokenStart[tokenCount - 1]) == 1)) newCharacterType = 3;
+
+		//Code
+		else if(a == ' ' || a == '\n' || a == '\t') newCharacterType = 4;
+		else if(a == '{' || a == '}' || a == '(' || a == ')' || a == '[' || a == ']' || a == '.' || a == ';') newCharacterType = 5;
+		else if((a >= 'a' && a <= 'z') || (a >= 'A' && a <= 'Z') || (a >= '0' && a <= '9') || a == '_') newCharacterType = 6;
+		else newCharacterType = 7;
+
+		if(newCharacterType != characterType || newCharacterType == 5)
 		{
-			if(tokenCount > 0 && characterType != 0) tokenEnd[tokenCount - 1] = i - 1;
-			if(newCharacterType != 0)
+			if(tokenCount > 0 && (characterType > 4 || characterType == 2 || characterType == 3)) tokenEnd[tokenCount - 1] = i - 1;
+			if(newCharacterType > 4 || newCharacterType == 2 || newCharacterType == 3)
 			{
 				if(tokenCount >= reservedTokenCount)
 				{
@@ -53,13 +71,6 @@ void Interpreter::setProgram(char* programCode)
 
 	tokenStart = (unsigned int*)realloc(tokenStart, tokenCount * 4);
 	tokenEnd = (unsigned int*)realloc(tokenEnd, tokenCount * 4);
-	
-	//if = ifnot() *jumpPos*, {jump *jumpPos*}
-	//else if = ifnot() *jumpPos*, {jump *jumpPos*}
-	//else = {}
-	//while = ifnot() *jumpPos*, {}, jump *jumpPos back*
-	//for = declare statment, ifnot() *jumpPos*, {}, jump *jumpPos back*
-	
 
 	programTokens = (unsigned int*)malloc(tokenCount * 4);
 	programTokensCount = tokenCount;
@@ -109,6 +120,25 @@ void Interpreter::setProgram(char* programCode)
 	{
 		Serial.println((char*)lookupTable[programTokens[a]]);
 	}*/
+
+	/*
+	 * turn program in to a scoped structure
+	 * 
+	 * ex:
+	 * 
+	 * int a = 0;
+	 * while(a < 7)
+	 * {
+	 * a++;
+	 * }
+	 * 
+	 * .0{[int], [a], [=], [0], [;], [while], [(], [a], [<], [7], [)], pointer to 1}
+	 * .1{[a], [++], [;]}
+	 * 
+	 * something along those lines...
+	 * 
+	 * unsigned int* code = 
+	 */
 }
 
 void Interpreter::error(char errorMessage[])
