@@ -1,0 +1,31 @@
+LookupTableType:
+00: undefined
+01: scope
+02: line ending
+03: new object type
+04: new function
+05: new object instance
+06: function call
+07: while
+08: for
+09: if
+10: else if
+11: else
+12: string
+
+add variable, variable id, variable objectTypePointer, variable value
+add object, object id, objectPointer
+add function
+
+function call
+
+LookupTableType:
+0:objectType
+1:instance
+2:function
+
+ProgramLine commands:
+0:create/run scope (codeScopePointer)
+1:create new object (id, objectPointer)
+2:create new object instance (id, objectId)
+3:create new function (id, objectId, codeScopePointer, inputVariableCount, {variableId, obejctTypeId, (int)hasValue, liertalIndex}...)

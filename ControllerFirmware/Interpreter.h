@@ -6,46 +6,96 @@
 class Interpreter
 {
 	public:
-		unsigned int* programTokens;
-		unsigned int programTokensCount = 0;
-		unsigned int* lookupTable; //Pointers to char arrays (0 terminated)
+		class CodeScope
+		{
+			public:
+				unsigned int* programLinePointer;
+				unsigned int programLineCount = 0;
+		};
+
+		class Object
+		{
+			public:
+				unsigned int variableCount = 0;
+				unsigned int functionCount = 0;
+				
+				unsigned int* variableTypeId;
+				unsigned int* variableId;
+				unsigned int* variableValuePointer;
+
+				unsigned int* functionId;
+				unsigned int* functionInputVariableId;
+				unsigned int* functionInputObjectTypeId;
+				boolean* functionInputHasValue;
+				unsigned int* functionInputLiteralIndex;
+				unsigned int* returnTypePointer;
+				CodeScope code;
+			
+				/*unsigned int variableCount = 0;
+				unsigned int objectCount = 0;
+				unsigned int functionCount = 0;
+	
+				unsigned int* variableId;
+				unsigned int* objectTypePointer;
+				unsigned int* variablePointer;
+	
+				unsigned int* objectId;
+				unsigned int* objectPointer;
+	
+				unsigned int* functionId;
+				unsigned int* functionInputVariableId;
+				unsigned int* functionInputObjectTypeId;
+				boolean* functionInputHasValue;
+				unsigned int* functionInputLiteralIndex;
+				unsigned int* returnTypePointer;
+				CodeScope code;*/
+		};
+
+		class Scope
+		{
+			public:
+				bool hasParent = false;
+				Scope* parent;
+				Scope* previousScope;
+				Object scopeObject;
+				unsigned int returnTypePointer;
+				CodeScope* code;
+				unsigned int codeIndex;
+		};
+
+		char* programCode;
+		unsigned int* tokenStart;
+		unsigned int* tokenEnd;
+		unsigned int tokenCount = 0;
+
+		unsigned int compileCodeIndex;
+	
+		CodeScope topCodeScope;
+		unsigned int* lookupTable;
 		byte* lookupTableType;
 		unsigned int lookupTableCount = 0;
+		unsigned int lookupTableReserved = 0;
 		
-		//unsigned int* stackScopePointer;
-		//unsigned int numberOfStacks = 0;
-		//unsigned int currentStack = 0;
+		Scope* scopeArray;
+		unsigned int scopeCount = 0;
+		unsigned int currentScope = 0;
 		
 		Interpreter();
 		
 		void setProgram(char* programCode);
+		void parseCode(char* code);
+		char* getToken(unsigned int index);
+		CodeScope createCodeScope(bool singleLine);
+		Object createObject();
+		bool valueInlookupTable(char* token);
+		unsigned int addToLookupTable(char* token, byte type);
+		unsigned int addToLookupTableDelete(char* token, byte type);
+		void addProgramLine(CodeScope code, std::initializer_list<unsigned int> a);
+
+		void execute(unsigned int milliseconds);
 		
 	private:
-		void error(char errorMessage[]);
+		void error(char* errorMessage);
 };
 
 #endif
-
-//
-// int i = 0;
-// {}
-// i++
-// ifnot(i < 10) jumpback 2 //2 (i < 10) 2
-// delete i
-//
-
-/*
- * tokenize code
- * replace tokens with unsigned ints (every new token get the next number)
- * - reserved names
- */
-
-/*
- * reserved token ints
- * 
- * object
- * '(', ')', '{', '}', '.', ';'
- * if, else if, else
- * while
- * for
- */
