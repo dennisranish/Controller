@@ -1,2 +1,2 @@
 # Controller
-A simple PWA(Progressive web app) controller
+A nodeMCU wifi conroller.
