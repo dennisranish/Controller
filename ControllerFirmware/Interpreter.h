@@ -61,6 +61,7 @@ class Interpreter
 				unsigned int returnTypePointer;
 				CodeScope* code;
 				unsigned int codeIndex;
+				bool completeIfCycle = true;
 		};
 
 		char* programCode;
@@ -87,7 +88,9 @@ class Interpreter
 		char* getToken(unsigned int index);
 		CodeScope createCodeScope(bool singleLine);
 		Object createObject();
+		CodeScope appendCodeFromExpression(CodeScope code);
 		bool valueInlookupTable(char* token);
+		byte getlookupTableType(char* token);
 		unsigned int addToLookupTable(char* token, byte type);
 		unsigned int addToLookupTableDelete(char* token, byte type);
 		void addProgramLine(CodeScope code, std::initializer_list<unsigned int> a);

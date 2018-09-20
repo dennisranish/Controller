@@ -173,7 +173,7 @@ Interpreter::CodeScope Interpreter::createCodeScope(bool singleLine)
 					{
 						char* functionInputToken = getToken(compileCodeIndex);
 	
-						if(strcmp(getToken(compileCodeIndex), ")") == 0)
+						if(strcmp(functionInputToken, ")") == 0)
 						{
 							compileCodeIndex++;
 							break;
@@ -194,29 +194,34 @@ Interpreter::CodeScope Interpreter::createCodeScope(bool singleLine)
 
 						char* functionToken = getToken(compileCodeIndex + 2);
 
-						if(strcmp(getToken(compileCodeIndex + 2), ",") == 0)
+						if(strcmp(functionToken, ",") == 0)
 						{
 							compileCodeIndex += 3;
 						}
-						else if(strcmp(getToken(compileCodeIndex + 2), "=") == 0)
+						else if(strcmp(functionToken, "=") == 0)
 						{
 							inputHasValue[inputCount - 1] = true;
 							inputLiteralIndex[inputCount - 1] = addToLookupTableDelete(getToken(compileCodeIndex + 3), 3);
 
-							if(strcmp(getToken(compileCodeIndex + 4), ",") != 0)
+							char* seperatorToken = getToken(compileCodeIndex + 4);
+							
+							if(strcmp(seperatorToken, ",") != 0)
 							{
-								error("");
+								error("expected: ,");
 								return code;
 							}
+
+							free(seperatorToken);
 
 							compileCodeIndex += 5;
 						}
 						else
 						{
-							error("");
+							error("expected: , or =");
 							return code;
 						}
-	
+
+						free(functionToken);
 						free(functionInputToken);
 					}
 	
@@ -231,24 +236,105 @@ Interpreter::CodeScope Interpreter::createCodeScope(bool singleLine)
 				{
 					addProgramLine(code, {2, instanceId, objectId});
 
-					if(strcmp(getToken(compileCodeIndex + 2), "=") == 0)
+					char* nextChar = getToken(compileCodeIndex + 2);
+
+					if(strcmp(nextChar, "=") == 0)
 					{
-						addProgramLine(code, {4, instanceId, objectId, addToLookupTableDelete(getToken(compileCodeIndex + 2), 2), 1, });
+						char* setValue = getToken(compileCodeIndex + 3);
+						
+						if(valueInlookupTable(setValue) == false || getlookupTableType(setValue) == 3)
+						{
+							addProgramLine(code, {4, instanceId, objectId, addToLookupTable(nextChar, 2), 1, addToLookupTable(setValue, 3)});
+						}
+						else
+						{
+							addProgramLine(code, {4, instanceId, objectId, addToLookupTable(nextChar, 2), 1, addToLookupTable(setValue, 1)});
+						}
+
+						free(setValue);
+
+						compileCodeIndex += 2;
+
+						char* closeChar = getToken(compileCodeIndex + 4);
+
+						if(strcmp(closeChar, ";") != 0)
+						{
+							error("expected: ;");
+							return code;
+						}
+
+						free(closeChar);
 					}
-					else if(strcmp(getToken(compileCodeIndex + 2), ";") != 0)
+					else if(strcmp(nextChar, ";") != 0)
 					{
 						error("");
 						return code;
 					}
+
+					free(nextChar);
+
+					compileCodeIndex += 3;
 				}
 			}
 			else if(lookupTableType[lookupTableIndex] == 1) //Object instance
 			{
-				
+				appendCodeFromExpression(code);
 			}
 			else if(lookupTableType[lookupTableIndex] == 2) //function
 			{
+				compileCodeIndex += 2;
 				
+				unsigned int* inputVariableId = (unsigned int*)malloc(400);
+
+				unsigned int inputCount = 0;
+				unsigned int reservedCount = 100;
+
+				while(true)
+				{
+					char* functionInputToken = getToken(compileCodeIndex);
+
+					if(strcmp(functionInputToken, ")") == 0)
+					{
+						compileCodeIndex++;
+						break;
+					}
+
+					if(reservedCount <= inputCount)
+					{
+						inputVariableId = (unsigned int*)realloc(inputVariableId, reservedCount * 4 + 400);
+					}
+
+					inputCount++;
+
+					char* setValue = getToken(compileCodeIndex + 1)
+
+					if(valueInlookupTable(setValue) == false || getlookupTableType(setValue) == 3)
+					{
+						inputVariableId[inputCount - 1] = addToLookupTableDelete(setValue, 3);
+					}
+					else
+					{
+						inputVariableId[inputCount - 1] = addToLookupTableDelete(setValue, 1);
+					}
+
+					char* functionToken = getToken(compileCodeIndex + 2);
+
+					if(strcmp(functionToken, ",") != 0)
+					{
+						error("Expected: ,");
+						return code;
+					}
+
+					compileCodeIndex += 2;
+
+					free(setValue);
+					free(functionToken);
+					free(functionInputToken);
+				}
+
+				inputVariableId = (unsigned int*)realloc(inputVariableId, inputCount * 4);
+
+				addProgramLine(code, {4, lookupTableIndex, inputCount, (unsigned int)inputVariableId});
 			}
 		}
 		else
@@ -272,6 +358,10 @@ Interpreter::Object Interpreter::createObject()
 	return newObject;
 }
 
+Interpreter::CodeScope Interpreter::appendCodeFromExpression(CodeScope code)
+{
+}
+
 bool Interpreter::valueInlookupTable(char* token)
 {
 	for(int i = 0; i < lookupTableCount; i++)
@@ -283,6 +373,19 @@ bool Interpreter::valueInlookupTable(char* token)
 	}
 
 	return false;
+}
+
+byte Interpreter::getlookupTableType(char* token)
+{
+	for(int i = 0; i < lookupTableCount; i++)
+	{
+		if(strcmp(token, (char*)lookupTable[i]) == 0)
+		{
+			return lookupTableType[i];
+		}
+	}
+
+	return 0;
 }
 
 unsigned int Interpreter::addToLookupTable(char* token, byte type)

@@ -23,9 +23,12 @@ LookupTableType:
 0:objectType
 1:instance
 2:function
+3:literal
 
 ProgramLine commands:
 0:create/run scope (codeScopePointer)
 1:create new object (id, objectPointer)
 2:create new object instance (id, objectId)
-3:create new function (id, objectId, codeScopePointer, inputVariableCount, {variableId, obejctTypeId, (int)hasValue, liertalIndex}...)
+3:create new function (id, objectId, codeScopePointer, inputVariableCount, &variableId, &obejctTypeId, &(int)hasValue, &liertalIndex)
+4:run function in instance (instanceId, typeId, functionId, inputVariableCount, &variableId (if variableCount == 1 &variableId is id not pointer))
+5:run function (functionId, inputVariableCount, &variableId)
