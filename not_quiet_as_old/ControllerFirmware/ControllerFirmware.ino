@@ -9,9 +9,7 @@ void setup()
 {	
 	Serial.begin(115200);
 	long startTime = millis();
-	
-	interpreter;
-	
+	interpreter.setProgram(code);
 	Serial.print("time: ");
 	Serial.println(millis() - startTime);
 }
