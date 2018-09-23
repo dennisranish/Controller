@@ -13,7 +13,7 @@ class Interpreter
 
 		void setProgram(char* code);
 		void compileProgram();
-		unsigned int* createObject();
+		unsigned int* createObjectFromCode(unsigned int& compileIndex);
 };
 
 //4 * (4 + 7) + (6 + 7)
@@ -40,8 +40,8 @@ class Interpreter
    * lookupTableId(object)
    * variable count
    * function/objectType count
-   * variablesPointer = [variableId, variablePointer]
-   * functions/classesPointer = [functions/classesId, functions/classesPointer]
+   * variablesPointer = [variableTypeId, variableId]
+   * functions/objectsPointer = [functions/objectsId, functions/objectsPointer]
    * 
    * function: (length 3 bytes)
    * lookupTableId(function)
