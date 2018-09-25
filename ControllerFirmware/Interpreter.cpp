@@ -6,7 +6,7 @@ void Interpreter::setProgram(char* code)
 }
 
 void Interpreter::compileProgram()
-{
+{	
 	//TODO parse code
 
 	//TODO add token zero to add array
@@ -21,6 +21,18 @@ void Interpreter::compileProgram()
 
 		while(true)
 		{
+			/*
+			 * if({)
+			 * else if(object) addProgramLine(compileIndex, {createObject, addToLookupTable(compileIndex + 1), (unsigned int)createObjectFromCode(compileIndex)});
+			 * else if(if) addIf();
+			 * else if(else) addElse();
+			 * else if(for) addFor();
+			 * else if(while) addWhile();
+			 * else if(typeId == object && token + 2 == '(')
+			 * else if(typeId == object) addProgramLine(compileIndex, {createInstance, addToLookupTable(compileIndex), addToLookupTable(compileIndex + 1)});
+			 * else
+			 */
+			
 			//TODO if (singleLine && token == ';') || (token == '}') break;
 
 			//TODO if token == '{' add to add array; then go until found the matching '}' (check against go to far); add jump command and 0, in add array add pointer to zero (to be filled in later)
@@ -81,5 +93,5 @@ unsigned int* Interpreter::createObjectFromCode(unsigned int& compileIndex)
 		}
 	}
 	
-	return newObject
+	return newObject;
 }

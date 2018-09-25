@@ -2,6 +2,7 @@
 #define Interpreter_h
 
 #include "Arduino.h"
+#include "Compiler.h"
 #include "Thread.h"
 
 class Interpreter
@@ -10,10 +11,21 @@ class Interpreter
 		enum CodeCommand {createObject, createInstance, createFunction};
 		char* codePointer;
 		std::vector<Thread> threadArray;
+		Compiler compiler;
 
 		void setProgram(char* code);
 		void compileProgram();
 		unsigned int* createObjectFromCode(unsigned int& compileIndex);
+
+		void addObject();
+		void addFunction();
+		void addInstance();
+		void addIf();
+		void addElseIf();
+		void addElse();
+		void addFor();
+		void addWhile();
+		
 };
 
 //4 * (4 + 7) + (6 + 7)
