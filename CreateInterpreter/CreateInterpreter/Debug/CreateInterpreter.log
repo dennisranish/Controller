@@ -1,2 +1,4 @@
-﻿  CreateInterpreter.cpp
-  CreateInterpreter.vcxproj -> C:\Users\denni\OneDrive\Documents\Visual Studio 2017\Projects\CreateInterpreter\Debug\CreateInterpreter.exe
+﻿  Compiler.cpp
+c:\users\denni\onedrive\documents\github\controller\createinterpreter\createinterpreter\compiler.cpp(103): warning C4018: '>=': signed/unsigned mismatch
+c:\users\denni\onedrive\documents\github\controller\createinterpreter\createinterpreter\compiler.cpp(130): warning C4018: '>=': signed/unsigned mismatch
+  CreateInterpreter.vcxproj -> C:\Users\denni\OneDrive\Documents\GitHub\Controller\CreateInterpreter\Debug\CreateInterpreter.exe

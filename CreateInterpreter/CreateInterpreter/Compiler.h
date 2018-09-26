@@ -3,6 +3,7 @@
 
 //#include "Arduino.h" //Add for arduino
 #include "vector"//Remove for arduino
+#include <stdarg.h>
 
 class Compiler
 {
@@ -20,6 +21,8 @@ class Compiler
 		unsigned int findStringInVector(const char* stringA, std::vector<char*> stringVector);
 		bool checkCharInRange(const char charA, const char* stringRange);
 		unsigned int findStringInRule(const char* stringA, std::vector<std::vector<char*>> stringVector);
+		void parseCode1(const char* code);
+
 		void parseCode(const char* code);
 
 		//bool cmpstr(char* a, char* b);
@@ -36,6 +39,41 @@ class Compiler
 		
 			return tokenValue;
 		}
+
+		void addRule(char a, ...)
+		{
+			char* newRule = (char*)malloc(100);
+			unsigned int newRuleSize = 1;
+			unsigned int newRuleCapacity = 100;
+			newRule[newRuleSize - 1] = a;
+
+			va_list vl;
+			va_start(vl, a);
+
+			while(true)
+			{
+				char newChar = vl[(newRuleSize - 1) * 4];
+
+				if (newRuleCapacity <= newRuleSize)
+				{
+					newRule = (char*)realloc(newRule, newRuleCapacity + 100);
+					newRuleCapacity += 100;
+				}
+
+				newRuleSize++;
+				newRule[newRuleSize - 1] = newChar;
+
+				if (newChar == 7) break;//endOfRule
+			}
+
+			newRule = (char*)realloc(newRule, newRuleSize);
+
+			rule.push_back(newRule);
+
+			va_end(vl);
+		}
+
+		std::vector<char*> rule;
 		
 	private:
 		std::vector<std::vector<char*>> standardRule;

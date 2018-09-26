@@ -3,7 +3,6 @@
 
 //#include "Arduino.h" //Add for arduino
 #include "vector"//Remove for arduino
-#include "Compiler.h"
 #include "Thread.h"
 
 class Interpreter
@@ -12,7 +11,6 @@ class Interpreter
 		enum CodeCommand {createObject, createInstance, createFunction};
 		char* codePointer;
 		std::vector<Thread> threadArray;
-		Compiler compiler;
 
 		void setProgram(char* code);
 		void compileProgram();

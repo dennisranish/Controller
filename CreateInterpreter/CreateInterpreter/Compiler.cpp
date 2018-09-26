@@ -76,7 +76,7 @@ unsigned int Compiler::findStringInRule(const char* stringA, std::vector<std::ve
 	return aSize;
 }
 
-void Compiler::parseCode(const char* code)
+void Compiler::parseCode1(const char* code)
 {
 	unsigned int index = 0;
 	unsigned int codeLength = strlen(code);
@@ -136,6 +136,140 @@ void Compiler::parseCode(const char* code)
 			index--;
 
 			tokenEnd.push_back(index);
+		}
+	}
+
+	tokenStart.shrink_to_fit();
+	tokenEnd.shrink_to_fit();
+}
+
+void Compiler::parseCode(const char* code)
+{
+	unsigned int ruleCount = rule.size();
+	unsigned int codeLength = strlen(code);
+	for (unsigned int index = 0; index <= codeLength; index++)
+	{
+		if (tokenStart.size() >= tokenStart.capacity())
+		{
+			tokenStart.reserve(tokenStart.size() + 100);
+			tokenEnd.reserve(tokenStart.size() + 100);
+		}
+
+		unsigned int startIndex = index;
+
+		for (unsigned int ruleIndex = 0; ruleIndex < ruleCount; ruleIndex++)
+		{
+			index = startIndex;
+			bool found = false;
+			bool inLoop = false;
+			bool untilLoop = false;
+			bool lookForLoopEnd = false;
+			unsigned int loopIndex = 0;
+			bool complete = false;
+			bool addToken = false;
+
+			for(unsigned int i = 0; index <= codeLength; i++)
+			{
+				if (lookForLoopEnd && rule[ruleIndex][i] != 3 && rule[ruleIndex][i] != 7) continue;
+				else if (lookForLoopEnd && rule[ruleIndex][i] == 3)
+				{
+					lookForLoopEnd = false;
+					continue;
+				}
+
+				if (rule[ruleIndex][i] == 0)//0: then
+				{
+					if (found == false && inLoop == false) break;
+					else if (found == false && inLoop == true && untilLoop == true) i = loopIndex;
+					else if (found == false && inLoop == true && untilLoop == false) lookForLoopEnd = true;
+					found = false;
+					index++;
+				}
+				else if (rule[ruleIndex][i] == 1)//1: loopWhile
+				{
+					inLoop = true;
+					untilLoop = false;
+					loopIndex = i;
+				}
+				else if (rule[ruleIndex][i] == 2)//2: loopUntil
+				{
+					inLoop = true;
+					untilLoop = true;
+					loopIndex = i;
+				}
+				else if (rule[ruleIndex][i] == 3)//3: loopEnd
+				{
+					if (found == false && untilLoop == true) i = loopIndex;
+					else if (found == true && untilLoop == false) i = loopIndex;
+					else inLoop = false;
+					found = false;
+					index++;
+				}
+				else if (rule[ruleIndex][i] == 4)//4: goBack
+				{
+					i++;
+					index -= rule[ruleIndex][i + 1];
+				}
+				else if (rule[ruleIndex][i] == 5)//5: addToken
+				{
+					complete = true;
+					addToken = true;
+					break;
+				}
+				else if (rule[ruleIndex][i] == 6)//6: discardToken
+				{
+					complete = true;
+					addToken = false;
+					break;
+				}
+				else if (rule[ruleIndex][i] == 7)//7: endOfRule
+				{
+					break;
+				}
+				else if (rule[ruleIndex][i] == 8)//8: range
+				{
+					if (found == false)
+					{
+						if (code[index] >= rule[ruleIndex][i + 1] && code[index] <= rule[ruleIndex][i + 2]) found = true;
+					}
+					i += 2;
+				}
+				else if (rule[ruleIndex][i] == 9)//9: single
+				{
+					if (found == false)
+					{
+						if (code[index] == rule[ruleIndex][i + 1]) found = true;
+					}
+					i += 1;
+				}
+				else if (rule[ruleIndex][i] == 10)//10: !range
+				{
+					if (found == false)
+					{
+						if (code[index] < rule[ruleIndex][i + 1] || code[index] > rule[ruleIndex][i + 2]) found = true;
+					}
+					i += 2;
+				}
+				else if (rule[ruleIndex][i] == 11)//11: !single
+				{
+					if (found == false)
+					{
+						if (code[index] != rule[ruleIndex][i + 1]) found = true;
+					}
+					i += 1;
+				}
+			}
+
+			if (complete)
+			{
+				if (addToken)
+				{
+					tokenStart.push_back(startIndex);
+					tokenEnd.push_back(index);
+				}
+
+				break;
+			}
 		}
 	}
 
