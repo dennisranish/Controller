@@ -3,25 +3,25 @@
 
 //#include "Arduino.h" //Add for arduino
 #include "vector"//Remove for arduino
+#include "Interpreter.h"
 
-class Thread
+class Interpreter::Thread
 {
 	public:
-		class Scope
-		{
-			public:
-				Scope* parentScope;
-				Scope* previousScope;
-				std::vector<unsigned int> variableId;
-				std::vector<unsigned int*> variablePointer;
+		enum codeCommands { cmd_newScope, cmd_callNative, cmd_push };
+		/*
+		newScope scopeIndex(unsgined)(from scope list create by compiler) parameters(unsigned) //codeIndex is already set and variables are initialized; previous scope needs to be set
+		callNative relativeParentIndex(unsigned) previousIndex(unsigned) numberOfVariables(unsigned) //function recives (pointerToScope, variableCount)
+		push variablePointer(unsigned)
+		*/
 
-				std::vector<unsigned int> workingStack;
-		};
-		
-		//unsigned int codeIndex;
-		//code pointer???
+		uintptr_t scope; //previous, parent, workingStackPointer, codeIndex, data...
 
-		//function to run one line
+		void executeLine(Interpreter parent);
+
+		/*To get to any variable go up through the scope some number of times (one number) then the index*/
+		/*Scopes are always a set size*/
+		/*public, private, object variable offset, etc. are all done by the compiler. The compiler HARD CODES in locations for variables*/
 };
 
 #endif

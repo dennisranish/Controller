@@ -8,26 +8,14 @@
 class Compiler
 {
 	public:
-		//void clearRules(){standardRule.clear();standardRuleTokenLength.clear();emptyRule.clear();commentRuleStart.clear();commentRuleEnd.clear();stringRuleStart.clear();stringRuleEnd.clear();stringRuleException.clear();stringRuleTokenLength.clear();includeRest = false;restTokenLength = -1;}
-		//void addRule(char* rule, int maxTokenLength, bool range = true){if(rule[0] == '\0'){includeRest = true;restTokenLength = maxTokenLength;return;}standardRule.push_back(rule);standardRuleTokenLength.push_back(maxTokenLength);standardRuleRange.push_back(range);}
-		//void addRuleEmpty(char* rule){emptyRule.insert(emptyRule.end(), rule, rule + strlen(rule));}
-		//void addRuleComment(char* ruleStart, char* ruleEnd){commentRuleStart.push_back(ruleStart);commentRuleEnd.push_back(ruleEnd);}
-		//void addRuleString(char* ruleStart, char* ruleEnd, char* ruleException, int maxTokenLength){stringRuleStart.push_back(ruleStart);stringRuleEnd.push_back(ruleEnd);stringRuleException.push_back(ruleException);stringRuleTokenLength.push_back(maxTokenLength);}
-
 		void addStandardRule(std::initializer_list<const char*> rule, char maxTokenLength = 0);
 		void addWrapRule(const char* start, const char* end, bool exclude, std::initializer_list<const char*> exceptions = { "" }, char maxTokenLength = 0);
 
 		bool compareStringTillEnd(const char* stringA, const char* stringB);
 		unsigned int findStringInVector(const char* stringA, std::vector<char*> stringVector);
 		bool checkCharInRange(const char charA, const char* stringRange);
-		unsigned int findStringInRule(const char* stringA, std::vector<std::vector<char*>> stringVector);
-		void parseCode1(const char* code);
-
+		unsigned int findStringInRule(const char* stringA);
 		void parseCode(const char* code);
-
-		//bool cmpstr(char* a, char* b);
-		//void parseCode1(char* code);
-		//void parseCode2(char* code);
 
 		unsigned int getSize(){return tokenStart.size();}
 		char* getToken(unsigned int index, char* programCode)
@@ -39,41 +27,6 @@ class Compiler
 		
 			return tokenValue;
 		}
-
-		void addRule(char a, ...)
-		{
-			char* newRule = (char*)malloc(100);
-			unsigned int newRuleSize = 1;
-			unsigned int newRuleCapacity = 100;
-			newRule[newRuleSize - 1] = a;
-
-			va_list vl;
-			va_start(vl, a);
-
-			while(true)
-			{
-				char newChar = vl[(newRuleSize - 1) * 4];
-
-				if (newRuleCapacity <= newRuleSize)
-				{
-					newRule = (char*)realloc(newRule, newRuleCapacity + 100);
-					newRuleCapacity += 100;
-				}
-
-				newRuleSize++;
-				newRule[newRuleSize - 1] = newChar;
-
-				if (newChar == 7) break;//endOfRule
-			}
-
-			newRule = (char*)realloc(newRule, newRuleSize);
-
-			rule.push_back(newRule);
-
-			va_end(vl);
-		}
-
-		std::vector<char*> rule;
 		
 	private:
 		std::vector<std::vector<char*>> standardRule;
@@ -85,22 +38,8 @@ class Compiler
 		std::vector<std::vector<char*>> wrapRuleExceptions;
 		std::vector<char> wrapRuleMaxTokenLength;
 
-		/*std::vector<char*> standardRule;
-		std::vector<int> standardRuleTokenLength;
-		std::vector<bool> standardRuleRange;
-		std::vector<char> emptyRule;
-		std::vector<char*> commentRuleStart;
-		std::vector<char*> commentRuleEnd;
-		std::vector<char*> stringRuleStart;
-		std::vector<char*> stringRuleEnd;
-		std::vector<char*> stringRuleException;
-		std::vector<int> stringRuleTokenLength;
-		bool includeRest = false;
-		int restTokenLength = -1;*/
-
 		std::vector<unsigned int> tokenStart;
 		std::vector<unsigned int> tokenEnd;
-		//std::vector<bool> isTokenString;
 };
 
 #endif

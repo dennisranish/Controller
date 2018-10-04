@@ -3,28 +3,20 @@
 
 //#include "Arduino.h" //Add for arduino
 #include "vector"//Remove for arduino
-#include "Thread.h"
 
 class Interpreter
 {
 	public:
-		enum CodeCommand {createObject, createInstance, createFunction};
-		char* codePointer;
-		std::vector<Thread> threadArray;
-
-		void setProgram(char* code);
-		void compileProgram();
-		unsigned int* createObjectFromCode(unsigned int& compileIndex);
-
-		void addObject();
-		void addFunction();
-		void addInstance();
-		void addIf();
-		void addElseIf();
-		void addElse();
-		void addFor();
-		void addWhile();
+		//enum codeCommands { cmd_createObject, cmd_createFunction, cmd_createInstance, cmd_pushVariable, cmd_call };
+		unsigned int* codePointer;
+		unsigned int** scope;
+		unsigned int* scopeSize;
+		class Thread;
+		//std::vector<Thread> thread;
+		std::vector<unsigned int> threadId;
 		
+		//void addNativeFunctionVoid(char* name, void (*function)(unsigned int*));
+		//void addNativeFunction(char* name, unsigned int* (*function)(unsigned int*));
 };
 
 //4 * (4 + 7) + (6 + 7)
