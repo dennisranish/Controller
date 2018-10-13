@@ -153,13 +153,11 @@
   <ItemGroup>
     <ClInclude Include="Compiler.h" />
     <ClInclude Include="Interpreter.h" />
-    <ClInclude Include="Thread.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Compiler.cpp" />
     <ClCompile Include="CreateInterpreter.cpp" />
     <ClCompile Include="Interpreter.cpp" />
-    <ClCompile Include="Thread.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
