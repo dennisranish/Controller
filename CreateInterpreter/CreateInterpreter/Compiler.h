@@ -20,7 +20,7 @@ class Compiler
 
 		std::vector<unsigned int> codePointerLut;//pointers to code, set after tree is generated
 
-		enum TreeStructureTypes { tst_scope, tst_scopeLoop, tst_scopeConditional, tst_objectType, tst_name };
+		enum TreeStructureTypes { tst_scope, tst_scopeForLoop, tst_scopeWhileLoop, tst_scopeFunction, tst_objectType, tst_name };
 		enum ActionType { at_normal, at_breakLoop, at_continueLoop, at_unexpectedToken };
 
 		struct TreeStructure
@@ -34,6 +34,7 @@ class Compiler
 			unsigned int lutId = UINT32_MAX;
 			unsigned int minVariables = 0;
 			unsigned int maxVariables = 0;
+			unsigned int returnTypeId = 0;
 
 			std::vector<unsigned int> objectId;//unneeded
 			std::vector<TreeStructure*> object;
@@ -55,6 +56,10 @@ class Compiler
 		};
 
 		std::vector<TreeStructure*> allTreeStructures;
+
+		std::vector<TreeStructure*> typeIdLut;
+		//0: void
+		//1: bool
 
 		struct TreeStructreReturn { TreeStructure* ts; ActionType at; };
 
@@ -83,10 +88,11 @@ class Compiler
 		//Program compile functions
 		void compileCode();
 
-		TreeStructreReturn create(TreeStructure *parent, TreeStructureTypes tsType, bool hasParent, bool singleLine, bool allowInstances, bool allowRunningCode, bool writeCodeToRoot, unsigned int startingSize, bool takeParameters, bool doLoop, unsigned int lutId);
+		TreeStructreReturn create(TreeStructure *parent, TreeStructureTypes tsType, bool hasParent, bool singleLine, bool allowInstances, bool allowRunningCode, bool writeCodeToRoot, unsigned int startingSize, bool takeParameters, bool doLoop, unsigned int lutId = UINT32_MAX);
+		ActionType evaluateExpretion(TreeStructure *parent, bool semicolonEnd, bool bracketEnd, unsigned int preferedType, unsigned int firstToken = 0, unsigned int lastToken = 0); unsigned int lastTypeId;
 
 		bool checkForToken(unsigned int index, const char* token);
-		bool isTokenObjectType(unsigned int index, TreeStructure *thisTS); TreeStructure *lastToken;
+		bool isTokenObjectType(unsigned int index, TreeStructure *thisTS); TreeStructure *lastToken; unsigned int lastTokenLength;
 		char* getTokenFullName(unsigned int index, TreeStructure *thisTS);
 		void addNativeFunction(const char* name, void(*function)(uintptr_t parentScope, uintptr_t previousScope, unsigned int parameterCount, uintptr_t thisPointer));
 		unsigned int lutGetId(unsigned int index);
@@ -103,6 +109,7 @@ class Compiler
 
 		std::vector<unsigned int> tokenStart;
 		std::vector<unsigned int> tokenEnd;
+		std::vector<unsigned int> tokenType;
 
 		unsigned int tokenIndex;
 

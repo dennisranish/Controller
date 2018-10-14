@@ -48,7 +48,8 @@ void Interpreter::Thread::executeLine(Interpreter parent)
 	else if (code[0] == cmd_endScope)
 	{
 		//code[1] = amount
-		codeIndex += 2;
+		//code[2] = jumpAmount
+		codeIndex += 3;
 	}
 	else
 	{

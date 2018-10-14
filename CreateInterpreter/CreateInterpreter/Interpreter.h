@@ -10,10 +10,11 @@ class Interpreter
 		unsigned int* codePointer;
 		void(**function)(uintptr_t parentScope, uintptr_t previousScope, unsigned int parameterCount, uintptr_t thisPointer);
 		unsigned int* codePointerLut;
+		unsigned int* typeSizeLut;
 		class Thread
 		{
 			public:
-				enum codeCommands { cmd_newScope, cmd_callNative, cmd_push, cmd_pushLiteral, cmd_copyParameter, cmd_jump, cmd_checkJump, cmd_endScope };
+				enum codeCommands { cmd_newScope, cmd_callNative, cmd_push, cmd_pushLiteral, cmd_copyParameter, cmd_jump, cmd_checkJump, cmd_endScope, cmd_returnValue};
 				/*
 				newScope sizeInBytes(unsgined)(from scope list create by compiler) parameterCount(unsigned) codeLutIndex(unsigned) //codeIndex is already set and variables are initialized; previous scope needs to be set
 				callNative nativeFunctionIndex(unsigned) //function recives pointerToScope
@@ -21,11 +22,13 @@ class Interpreter
 				pushLiteral pointer(unsigned)
 				copyParameter sizeInBytes(unsigned) positionToCopy(unsigned) defaultValuePointer(unsigned)
 				jump jumpAmount(signed) //adds jumpAmount to codeIndex
-				checkJump jumpAmount(signed) //adds jumpAmount to codeIndex if top value in workingSrack is true (removes top element from workingStack) otherwise adds 2 (to get to the next line)
-				endScope amount(unsigned) //ends that many scopes
+				checkJump jumpAmount(signed) //adds jumpAmount to codeIndex if top value in workingSrack is false (removes top element from workingStack) otherwise adds 2 (to get to the next line)
+				endScope amount(unsigned) jumpAmount(unsigned) //ends that many scopes
+				returnValue amount(unsigned) //ends that many scopes, copies value and adds to workingstack
 				*/
 
-				uintptr_t scope; //previous, parent, workingStackPointer, workingStackType, codeIndex, parametersLeft, data...
+				uintptr_t scope; //previous, parent, workingStackPointer, workingStackType, workingStackDetails, codeIndex, parametersLeft, data...
+				const static unsigned int ScopeMinSize = 7 * 4;
 
 				//workingStackType: isPointer
 
