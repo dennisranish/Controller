@@ -82,7 +82,7 @@ void Compiler::parseCode(const char* code)
 
 	unsigned int index = 0;
 	unsigned int codeLength = strlen(code);
-	for (; index <= codeLength; index++)
+	for (; index < codeLength; index++)
 	{
 		if (tokenStart.size() >= tokenStart.capacity())
 		{
@@ -156,17 +156,69 @@ void Compiler::parseCode(const char* code)
 
 void Compiler::compileCode()
 {
-	TreeStructreReturn a = create(NULL, tst_scope, false, false, true, true, false, Interpreter::Thread::ScopeMinSize, false, true);
-
-	//TODO: resolveNames (namespaces)
+	TreeStructureReturn a = create(NULL, tst_scope, false, false, true, true, false, Interpreter::Thread::ScopeMinSize, false, true);
+	a;
 }
 
-Compiler::TreeStructreReturn Compiler::create(TreeStructure *parent, TreeStructureTypes tsType, bool hasParent, bool singleLine, bool allowInstances, bool allowRunningCode, bool writeCodeToRoot, unsigned int startingSize, bool takeParameters, bool doLoop, unsigned int lutId)
+Compiler::TreeStructureReturn Compiler::create(TreeStructure *parent, TreeStructureTypes tsType, bool hasParent, bool singleLine, bool allowInstances, bool allowRunningCode, bool writeCodeToRoot, unsigned int startingSize, bool takeParameters, bool doLoop, unsigned int lutId, unsigned int returnType, bool addAsObject)
 {
 	TreeStructure* thisTS = new TreeStructure{ tsType, startingSize, hasParent, parent };
 	if (writeCodeToRoot) thisTS->codeRoot = parent->codeRoot;
 	else thisTS->codeRoot = thisTS;
+	thisTS->lutId = lutId;
+	thisTS->returnTypeId = returnType;
 	allTreeStructures.push_back(thisTS);
+	if (addAsObject) parent->object.push_back(thisTS);
+
+	if (takeParameters)
+	{
+		if (!checkForToken(tokenIndex, "(")) return { thisTS, at_unexpectedToken };
+		tokenIndex += 1;
+		bool defaulValue = false;
+
+		while (true)
+		{
+			if (!isTokenObjectType(tokenIndex, thisTS)) return { thisTS, at_unexpectedToken };
+			TreeStructure *object = lastToken;
+			tokenIndex += lastTokenLength;
+			if (object->size == 0) { tokenIndex -= lastTokenLength; return { thisTS, at_unexpectedToken }; }
+			if (tokenType[tokenIndex] != 0) return { thisTS, at_unexpectedToken };
+			unsigned int instanceId = lutGetId(tokenIndex);
+			thisTS->instanceId.push_back(instanceId);
+			thisTS->instanceType.push_back(object);
+			thisTS->variableType.push_back(typeLutGetId(object));
+			if (checkForToken(tokenIndex + 1, "="))
+			{
+				ExprStructReturn exprStructReturn = evaluateExpretion(thisTS, ",)", 0);
+				if (exprStructReturn.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
+				defaulValue = true;
+				thisTS->maxVariables += 1;
+				if (checkForToken(tokenIndex - 1, ")"))
+				{
+					break;
+				}
+			}
+			else if (checkForToken(tokenIndex + 1, ","))
+			{
+				if(defaulValue == true) return { thisTS, at_unexpectedToken };
+				tokenIndex += 1;
+				thisTS->minVariables += 1;
+				thisTS->maxVariables += 1;
+			}
+			else if (checkForToken(tokenIndex + 1, ")"))
+			{
+				if (defaulValue == true) return { thisTS, at_unexpectedToken };
+				thisTS->minVariables += 1;
+				thisTS->maxVariables += 1;
+				tokenIndex += 2;
+				break;
+			}
+			else return { thisTS, at_unexpectedToken };
+		}
+
+		if (!checkForToken(tokenIndex, "{") && doLoop) return { thisTS, at_unexpectedToken };
+		if (doLoop) tokenIndex += 1;
+	}
 
 	while (tokenIndex < tokenStart.size() && doLoop)
 	{
@@ -174,15 +226,16 @@ Compiler::TreeStructreReturn Compiler::create(TreeStructure *parent, TreeStructu
 		{
 			if (!allowRunningCode) return { thisTS, at_unexpectedToken };
 			tokenIndex += 1;
-			TreeStructreReturn newScope = create(thisTS, tst_scope, true, false, true, true, false, Interpreter::Thread::ScopeMinSize, false, true);
+			TreeStructureReturn newScope = create(thisTS, tst_scope, true, false, true, true, false, Interpreter::Thread::ScopeMinSize, false, true);
 			if (newScope.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
-			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, newScope.ts->size, 0, newScope.ts->codeRoot->getCodeStart(&codePointerLut) });
+			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, newScope.ts->size, 0, newScope.ts->codeRoot->getCodeStart(&codePointerLut, &codeTreeStruct) });
 		}
 		else if (checkForToken(tokenIndex, "}"))
 		{
 			if (singleLine) return { thisTS, at_unexpectedToken };
 			tokenIndex += 1;
-			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_endScope, 1 });
+			if (thisTS->type == tst_scopeFunction && !thisTS->hasReturn && typeIdLut[thisTS->returnTypeId]->size > 0) return { thisTS, at_unexpectedToken };
+			if (allowRunningCode) thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_endScope, 1 });
 			return { thisTS, at_normal };
 		}
 		else if (checkForToken(tokenIndex, ";"))
@@ -203,9 +256,10 @@ Compiler::TreeStructreReturn Compiler::create(TreeStructure *parent, TreeStructu
 			tokenIndex += 1;
 			if (!checkForToken(tokenIndex, "{")) return { thisTS, at_unexpectedToken };
 			tokenIndex += 1;
-			TreeStructreReturn newObject = create(thisTS, tst_objectType, true, false, true, false, true, 0, false, true, objectId);
+			TreeStructureReturn newObject = create(thisTS, tst_objectType, true, false, true, false, true, 0, false, true, objectId, 0, true);
 			if (newObject.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
-			thisTS->object.push_back(newObject.ts);
+			//thisTS->object.push_back(newObject.ts);
+			typeLutGetId(newObject.ts);
 		}
 		else if (checkForToken(tokenIndex, "nativeObject"))
 		{
@@ -217,19 +271,23 @@ Compiler::TreeStructreReturn Compiler::create(TreeStructure *parent, TreeStructu
 			char *token = getToken(tokenIndex), *end;
 			unsigned int objectSize = strtol(token, &end, 10);
 			if (end - token != tokenEnd[tokenIndex] - tokenStart[tokenIndex] + 1) return { thisTS, at_unexpectedToken };
+			free(token);
 			tokenIndex += 1;
 			if (!checkForToken(tokenIndex, "{")) return { thisTS, at_unexpectedToken };
 			tokenIndex += 1;
-			TreeStructreReturn newObject = create(thisTS, tst_objectType, true, false, true, false, true, objectSize, false, true, objectId);
+			TreeStructureReturn newObject = create(thisTS, tst_objectType, true, false, true, false, true, objectSize, false, true, objectId, 0, true);
 			if (newObject.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
-			thisTS->object.push_back(newObject.ts);
+			//thisTS->object.push_back(newObject.ts);
+			typeLutGetId(newObject.ts);
 		}
 		else if (checkForToken(tokenIndex, "nativeFunction"))
 		{
 			tokenIndex += 1;
 			if (!isTokenObjectType(tokenIndex, thisTS)) return { thisTS, at_unexpectedToken };
 			tokenIndex += 1;
-			if (tokenType[tokenIndex] != 0 || (tokenType[tokenIndex] != 3 && thisTS->type == tst_objectType)) return { thisTS, at_unexpectedToken };
+			if (tokenType[tokenIndex] != 0 && (tokenType[tokenIndex] != 3 && thisTS->type == tst_objectType)) return { thisTS, at_unexpectedToken };
+			bool isOperator = false;
+			if (tokenType[tokenIndex] == 3) isOperator = true;
 			char* fullName = getTokenFullName(tokenIndex, thisTS);
 			bool foundNativeFunction = false;
 			unsigned int nativeFunctionIndex;
@@ -247,9 +305,10 @@ Compiler::TreeStructreReturn Compiler::create(TreeStructure *parent, TreeStructu
 			unsigned int functionId = lutGetId(tokenIndex);
 			thisTS->functionId.push_back(functionId);
 			tokenIndex += 1;
-			TreeStructreReturn newFunction = create(thisTS, tst_scopeFunction, true, false, true, true, false, Interpreter::Thread::ScopeMinSize, true, false, functionId);
+			TreeStructureReturn newFunction = create(thisTS, tst_scopeFunction, true, false, true, true, false, Interpreter::Thread::ScopeMinSize, true, false, functionId);
 			if (newFunction.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
 			thisTS->function.push_back(newFunction.ts);
+			if (isOperator && newFunction.ts->maxVariables > 1) return { thisTS, at_unexpectedToken };
 			newFunction.ts->codeRoot->addToCode({ Interpreter::Thread::cmd_callNative, nativeFunctionIndex });
 			if (!checkForToken(tokenIndex, ";")) return { thisTS, at_unexpectedToken };
 			tokenIndex += 1;
@@ -263,7 +322,7 @@ Compiler::TreeStructreReturn Compiler::create(TreeStructure *parent, TreeStructu
 			tokenIndex += 1;
 			if (!checkForToken(tokenIndex, "{")) return { thisTS, at_unexpectedToken };
 			tokenIndex += 1;
-			TreeStructreReturn newName = create(parent, tst_name, true, false, true, allowRunningCode, true, 0, false, true, nameId);
+			TreeStructureReturn newName = create(parent, tst_name, true, false, true, allowRunningCode, true, 0, false, true, nameId);
 			if (newName.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
 			thisTS->name.push_back(newName.ts);
 		}
@@ -281,17 +340,18 @@ Compiler::TreeStructreReturn Compiler::create(TreeStructure *parent, TreeStructu
 				{
 					if (!checkForToken(tokenIndex, "(")) return { thisTS, at_unexpectedToken };
 					tokenIndex += 1;
-					ActionType actionType = evaluateExpretion(thisTS, false, true, 1);
-					if (actionType == at_unexpectedToken) return { thisTS, at_unexpectedToken };
+					ExprStructReturn exprStructReturn = evaluateExpretion(thisTS, ")", 1);
+					if (exprStructReturn.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
+					if (exprStructReturn.returnTypeId != 1) return { thisTS, at_unexpectedToken };
 				}
 
-				TreeStructreReturn newScope;
+				TreeStructureReturn newScope;
 				if (checkForToken(tokenIndex, "{")) { tokenIndex += 1; newScope = create(thisTS, tst_scope, true, false, true, true, false, Interpreter::Thread::ScopeMinSize, false, true); }
 				else newScope = create(thisTS, tst_scope, true, true, true, true, false, 7, false, true);
 				if (newScope.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
 
 				thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_checkJump, 3 });
-				thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, newScope.ts->size, 0, newScope.ts->codeRoot->getCodeStart(&codePointerLut) });
+				thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, newScope.ts->size, 0, newScope.ts->codeRoot->getCodeStart(&codePointerLut, &codeTreeStruct) });
 				if (last) break;
 				thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_jump, 0 });
 				statmentPointer.push_back(&thisTS->codeRoot->code.back());
@@ -318,30 +378,43 @@ Compiler::TreeStructreReturn Compiler::create(TreeStructure *parent, TreeStructu
 			tokenIndex += 1;
 			if (!checkForToken(tokenIndex, "(")) return { thisTS, at_unexpectedToken };
 			tokenIndex += 1;
-			ActionType actionType = evaluateExpretion(thisTS, true, false);
-			if (actionType == at_unexpectedToken) return { thisTS, at_unexpectedToken };
+			if(!isTokenObjectType(tokenIndex, thisTS)) return { thisTS, at_unexpectedToken };
+			TreeStructure *object = lastToken;
+			tokenIndex += lastTokenLength;
+			if (object->size == 0) { tokenIndex -= lastTokenLength; return { thisTS, at_unexpectedToken }; }
+			if (tokenType[tokenIndex] != 0) return { thisTS, at_unexpectedToken };
+			unsigned int instanceId = lutGetId(tokenIndex);
+			thisTS->instanceId.push_back(instanceId);
+			thisTS->instanceType.push_back(object);
+			if (checkForToken(tokenIndex + 1, "="))
+			{
+				ExprStructReturn exprStructReturn = evaluateExpretion(thisTS, ";", 0);
+				if (exprStructReturn.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
+			}
+			else tokenIndex += 1;
 
 			unsigned int codeJumpPosition = thisTS->codeRoot->code.size();
-			actionType = evaluateExpretion(thisTS, true, false, 1);
-			if (actionType == at_unexpectedToken) return { thisTS, at_unexpectedToken };
+			ExprStructReturn exprStructReturn = evaluateExpretion(thisTS, ";", 1);
+			if (exprStructReturn.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
+			if (exprStructReturn.returnTypeId != 1) return { thisTS, at_unexpectedToken };
 			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_checkJump, 0 });
 			unsigned int* writeStatmentEnd = &thisTS->codeRoot->code.back();
 			unsigned int position = thisTS->codeRoot->code.size() - 2;
 			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, 0, 0, 0 });
 
-			actionType = evaluateExpretion(thisTS, false, true);
-			if (actionType == at_unexpectedToken) return { thisTS, at_unexpectedToken };
+			exprStructReturn = evaluateExpretion(thisTS, ")", 0);
+			if (exprStructReturn.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
 			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_jump, codeJumpPosition - thisTS->codeRoot->code.size() });
 			*writeStatmentEnd = thisTS->codeRoot->code.size() - position;
 
-			TreeStructreReturn newScope;
+			TreeStructureReturn newScope;
 			if (checkForToken(tokenIndex, "{")) { tokenIndex += 1; newScope = create(thisTS, tst_scopeForLoop, true, false, true, true, false, Interpreter::Thread::ScopeMinSize, false, true); }
 			else newScope = create(thisTS, tst_scopeForLoop, true, true, true, true, false, 7, false, true);
 			if (newScope.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
 			writeStatmentEnd[1] = Interpreter::Thread::cmd_newScope;
 			writeStatmentEnd[2] = newScope.ts->size;
 			writeStatmentEnd[3] = 0;
-			writeStatmentEnd[4] = newScope.ts->codeRoot->getCodeStart(&codePointerLut);
+			writeStatmentEnd[4] = newScope.ts->codeRoot->getCodeStart(&codePointerLut, &codeTreeStruct);
 		}
 		else if (checkForToken(tokenIndex, "while"))
 		{
@@ -351,15 +424,16 @@ Compiler::TreeStructreReturn Compiler::create(TreeStructure *parent, TreeStructu
 			if (!checkForToken(tokenIndex, "(")) return { thisTS, at_unexpectedToken };
 			tokenIndex += 1;
 			unsigned int statmentStart = thisTS->codeRoot->code.size();
-			ActionType actionType = evaluateExpretion(thisTS, true, false, 1);
-			if (actionType == at_unexpectedToken) return { thisTS, at_unexpectedToken };
+			ExprStructReturn exprStructReturn = evaluateExpretion(thisTS, ")", 1);
+			if (exprStructReturn.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
+			if (exprStructReturn.returnTypeId != 1) return { thisTS, at_unexpectedToken };
 			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_checkJump, 7 });
 
-			TreeStructreReturn newScope;
+			TreeStructureReturn newScope;
 			if (checkForToken(tokenIndex, "{")) { tokenIndex += 1; newScope = create(thisTS, tst_scopeWhileLoop, true, false, true, true, false, Interpreter::Thread::ScopeMinSize, false, true); }
 			else newScope = create(thisTS, tst_scopeWhileLoop, true, true, true, true, false, 7, false, true);
 			if (newScope.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
-			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, newScope.ts->size, 0, newScope.ts->codeRoot->getCodeStart(&codePointerLut) });
+			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, newScope.ts->size, 0, newScope.ts->codeRoot->getCodeStart(&codePointerLut, &codeTreeStruct) });
 			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_jump, statmentStart - thisTS->codeRoot->code.size() });
 		}
 		else if (checkForToken(tokenIndex, "break"))
@@ -418,9 +492,11 @@ Compiler::TreeStructreReturn Compiler::create(TreeStructure *parent, TreeStructu
 		}
 		else if (checkForToken(tokenIndex, "return"))
 		{
+			thisTS->hasReturn = true;
 			unsigned int functionScopesBack = 1;
 			bool function = false;
 			TreeStructure* currentTS = thisTS;
+			tokenIndex += 1;
 
 			while (true)
 			{
@@ -432,15 +508,16 @@ Compiler::TreeStructreReturn Compiler::create(TreeStructure *parent, TreeStructu
 
 			if (function)
 			{
-				if (checkForToken(tokenIndex + 1, ";"))
+				if (checkForToken(tokenIndex, ";"))
 				{
 					if(currentTS->size == 0) thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_endScope, functionScopesBack, 0 });
+					else return { thisTS, at_unexpectedToken };
 				}
 				else
 				{
-					ActionType actionType = evaluateExpretion(thisTS, true, false, currentTS->returnTypeId);
-					if (actionType == at_unexpectedToken) return { thisTS, at_unexpectedToken };
-					if (lastTypeId != currentTS->returnTypeId) return { thisTS, at_unexpectedToken };
+					ExprStructReturn exprStructReturn = evaluateExpretion(thisTS, ";", currentTS->returnTypeId);
+					if (exprStructReturn.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
+					if (exprStructReturn.returnTypeId != currentTS->returnTypeId) return { thisTS, at_unexpectedToken };
 					thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_returnValue, functionScopesBack });
 				}
 			}
@@ -451,45 +528,513 @@ Compiler::TreeStructreReturn Compiler::create(TreeStructure *parent, TreeStructu
 			TreeStructure *object = lastToken;
 			tokenIndex += lastTokenLength;
 
-			if (checkForToken(tokenIndex + 1, "("))
+			if (isTokenFunction(tokenIndex, thisTS, true))
 			{
-				if (tokenType[tokenIndex] != 0 || (tokenType[tokenIndex] != 3 && thisTS->type == tst_objectType)) return { thisTS, at_unexpectedToken };
+				tokenIndex += lastTokenLength;
+				if (lastToken->functionInitilized == true) return { thisTS, at_unexpectedToken };
+				TreeStructure* lastTokenS = lastToken, *lastParentS = lastParent;
+				TreeStructureReturn newFunction = create(lastParentS, tst_scopeFunction, true, false, true, true, false, 7, true, true, lastTokenS->lutId, lastTokenS->returnTypeId);
+				if (newFunction.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
+				newFunction.ts->functionInitilized = true;
+				bool variablesMatch = true;
+				for (unsigned int i = 0; i < lastTokenS->variableType.size(); i++) if (newFunction.ts->variableType[i] != lastTokenS->variableType[i]) variablesMatch = false;
+				if (lastTokenS->minVariables != newFunction.ts->minVariables || lastTokenS->maxVariables != newFunction.ts->maxVariables || !variablesMatch) return { thisTS, at_unexpectedToken };
+
+				if (lastTokenS->codeLutIndex != UINT32_MAX)
+				{
+					codeTreeStruct[lastTokenS->codeLutIndex] = newFunction.ts;
+					newFunction.ts->codeLutIndex = lastTokenS->codeLutIndex;
+				}
+				lastParentS->function[lastIndex] = newFunction.ts;
+			}
+			else if (checkForToken(tokenIndex + 1, "("))
+			{
+				if (tokenType[tokenIndex] != 0 && (tokenType[tokenIndex] != 3 && thisTS->type == tst_objectType)) return { thisTS, at_unexpectedToken };
+				bool isOperator = false;
+				if (tokenType[tokenIndex] == 3) isOperator = true;
 				unsigned int functionId = lutGetId(tokenIndex);
 				thisTS->functionId.push_back(functionId);
 				tokenIndex += 1;
-				TreeStructreReturn newFunction = create(thisTS, tst_scopeFunction, true, false, true, true, false, 7, true, true, functionId);
-				if (newFunction.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
-				thisTS->function.push_back(newFunction.ts);
+
+				unsigned int paranthesis = 1, parameterStart = tokenIndex;
+				if (!checkForToken(tokenIndex, "(")) return { thisTS, at_unexpectedToken };
+				tokenIndex += 1;
+				while (paranthesis != 0)
+				{
+					if (checkForToken(tokenIndex, "(")) paranthesis++;
+					if (checkForToken(tokenIndex, ")")) paranthesis--;
+					tokenIndex += 1;
+				}
+
+				if (checkForToken(tokenIndex, ";"))
+				{
+					tokenIndex = parameterStart;
+					TreeStructureReturn newFunction = create(thisTS, tst_scopeFunction, true, false, true, true, false, Interpreter::Thread::ScopeMinSize, true, false, functionId, typeLutGetId(object));
+					if (newFunction.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
+					thisTS->function.push_back(newFunction.ts);
+					if (isOperator && newFunction.ts->maxVariables > 1) return { thisTS, at_unexpectedToken };
+					tokenIndex += 1;
+				}
+				else if (checkForToken(tokenIndex, "{"))
+				{
+					tokenIndex = parameterStart;
+					TreeStructureReturn newFunction = create(thisTS, tst_scopeFunction, true, false, true, true, false, Interpreter::Thread::ScopeMinSize, true, true, functionId, typeLutGetId(object));
+					if (newFunction.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
+					thisTS->function.push_back(newFunction.ts);
+					newFunction.ts->functionInitilized = true;
+					if (isOperator && newFunction.ts->maxVariables > 1) return { thisTS, at_unexpectedToken };
+				}
+				else return { thisTS, at_unexpectedToken };
 			}
 			else
 			{
+				if (!allowInstances) return { thisTS, at_unexpectedToken };
 				if (object->size == 0) { tokenIndex -= lastTokenLength; return { thisTS, at_unexpectedToken }; }
 				if (tokenType[tokenIndex] != 0) return { thisTS, at_unexpectedToken };
 				unsigned int instanceId = lutGetId(tokenIndex);
 				thisTS->instanceId.push_back(instanceId);
+				thisTS->nameHost.push_back(thisTS);
 				thisTS->instanceType.push_back(object);
+				thisTS->size += object->size;
+
+				if (thisTS->type == tst_name)
+				{
+					thisTS->codeRoot->instanceId.push_back(instanceId);
+					thisTS->codeRoot->nameHost.push_back(thisTS);
+					thisTS->codeRoot->instanceType.push_back(object);
+					thisTS->codeRoot->size += object->size;
+				}
+
 				if (checkForToken(tokenIndex + 1, "="))
 				{
-					ActionType actionType = evaluateExpretion(thisTS, true, false, 0);
-					if (actionType == at_unexpectedToken) return { thisTS, at_unexpectedToken };
+					ExprStructReturn exprStructReturn = evaluateExpretion(thisTS, ";", 0);
+					if (exprStructReturn.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
 				}
-				else tokenIndex += 1;
+				else if (checkForToken(tokenIndex + 1, ";")) tokenIndex += 1;
+				else return { thisTS, at_unexpectedToken };
 			}
 		}
 		else
 		{
-			ActionType actionType = evaluateExpretion(thisTS, true, false, 0);
-			if (actionType == at_unexpectedToken) return { thisTS, at_unexpectedToken };
+			ExprStructReturn exprStructReturn = evaluateExpretion(thisTS, ";", 0);
+			if (exprStructReturn.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
 		}
 	}
 
-	if(!doLoop) return { thisTS, at_normal };
+	if(!doLoop || tokenIndex >= tokenStart.size()) return { thisTS, at_normal };
 	return { thisTS, at_unexpectedToken };
 }
 
-Compiler::ActionType Compiler::evaluateExpretion(TreeStructure *parent, bool semicolonEnd, bool bracketEnd, unsigned int preferedType, unsigned int firstToken, unsigned int lastToken)
+Compiler::ExprStructReturn Compiler::evaluateExpretion(TreeStructure *thisTS, const char* end, unsigned int preferedType)
 {
-	return at_normal;
+	unsigned int firstExprToken = tokenIndex, lastExprToken, endSize = strlen(end);
+	bool foundEnd = false;
+	while (!foundEnd)
+	{
+		for (unsigned int i = 0; i < endSize; i++) if (tokenStart[tokenIndex] == tokenEnd[tokenIndex] && rawCode[tokenStart[tokenIndex]] == end[i])
+		{
+			foundEnd = true;
+			break;
+		}
+		tokenIndex += 1;
+	}
+	lastExprToken = tokenIndex - 2;
+
+	std::vector<ExprStruct> expr;
+
+	for (unsigned int i = firstExprToken; i <= lastExprToken;)
+	{
+		if (isTokenInstance(i, thisTS))
+		{
+			i += lastTokenLength;
+			expr.push_back({ es_variable, scopesBack, indexFromThere, lastToken->instanceType[lastIndex] });
+		}
+		else if (isTokenFunction(i, thisTS, false))
+		{
+			i += lastTokenLength;
+			expr.push_back({ es_function, 0, 0, lastToken });
+		}
+		else if (checkForToken(i, "false"))
+		{
+			expr.push_back({ es_literal, getLiteralId((char*)"\000", 1), 0, typeIdLut[1] });
+			i += 1;
+		}
+		else if (checkForToken(i, "true"))
+		{
+			expr.push_back({ es_literal, getLiteralId((char*)"\001", 1), 0, typeIdLut[1] });
+			i += 1;
+		}
+		else if (tokenType[i] == 1)
+		{
+			char *token = getToken(i), *end;
+			double number = strtod(token, &end);
+			int intNumber = number;
+			if (end - token != tokenEnd[i] - tokenStart[i] + 1) { tokenIndex = i; return { 0, at_unexpectedToken }; }
+			free(token);
+			if (number == intNumber) expr.push_back({ es_literal, getLiteralId((char*)&intNumber, 2), 0, typeIdLut[2] });
+			else expr.push_back({ es_literal, getLiteralId((char*)&number, 3), 0, typeIdLut[3] });
+			i += 1;
+		}
+		else if (tokenType[i] == 3)
+		{
+			expr.push_back({ es_operator, lutGetId(i), 0, 0 });
+			i += 1;
+		}
+		else if (checkForToken(i, "("))
+		{
+			i += 1;
+
+			if (isTokenObjectType(i, thisTS))
+			{
+				i += lastTokenLength;
+				if (!checkForToken(i, ")")) { tokenIndex = i; return { 0, at_unexpectedToken }; }
+				i += 1;
+				expr.push_back({ es_operator, 0, 1, lastToken });
+			}
+			else
+			{
+				expr.push_back({ es_open, 0, 0, 0 });
+			}
+		}
+		else if (checkForToken(i, ")"))
+		{
+			expr.push_back({ es_close, 0, 0, 0 });
+			i += 1;
+		}
+		else if (checkForToken(i, ","))
+		{
+			expr.push_back({ es_seperator, 0, 0, 0 });
+			i += 1;
+		}
+		else if (tokenType[i] == 4 || tokenType[i] == 5)
+		{
+			std::vector<char> stringLiteral;
+
+			for (unsigned s = tokenStart[i] + 1; s < tokenEnd[i]; s++)
+			{
+				if (rawCode[s] == '\\')
+				{
+					if(s == tokenEnd[i] - 1) { tokenIndex = i; return { 0, at_unexpectedToken }; }
+
+					if(rawCode[s + 1] == '\\') stringLiteral.push_back('\\');
+					else if (rawCode[s + 1] == '0') stringLiteral.push_back('\0');
+					else if (rawCode[s + 1] == 'n') stringLiteral.push_back('\n');
+					else if (rawCode[s + 1] == '\'') stringLiteral.push_back('\'');
+					else if (rawCode[s + 1] == '"') stringLiteral.push_back('"');
+
+					s += 1;
+				}
+				else stringLiteral.push_back(rawCode[s]);
+			}
+
+			//TODO: strings
+
+			i += 1;
+		}
+		else { tokenIndex = i; return { 0, at_unexpectedToken }; }
+	}
+
+	thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_clearWS });
+
+	for (unsigned int i = 0; i < expr.size(); i++)
+	{
+		if (expr[i].type == es_variable || expr[i].type == es_literal || expr[i].type == es_stored || expr[i].type == es_function)
+		{
+			TreeStructure *type = expr[i].instanceType;
+			if (expr[i].type == es_function) type = typeIdLut[expr[i].function->returnTypeId];
+
+			while (i > 0)
+			{
+				if (expr[i - 1].type == es_operator)
+				{
+					bool found = false;
+					for (unsigned int f = 0; f < type->function.size(); f++) if ((type->functionId[f] == expr[i - 1].lutId && expr[i - 1].operatorType == 0) || (typeIdLut[type->returnTypeId] == expr[i - 1].instanceType && expr[i - 1].operatorType == 1))
+					{
+						if (type->function[f]->maxVariables != 0) continue;
+						if (expr[i - 1].operatorType == 0) { expr[i].unaryOperators.push_back(type->function[f]->lutId); expr[i].unaryIsCast.push_back(false); }
+						else if (expr[i - 1].operatorType == 1) { expr[i].unaryOperators.push_back(type->returnTypeId); expr[i].unaryIsCast.push_back(true); }
+						else return { NULL, at_unexpectedToken };
+						type = typeIdLut[type->function[f]->returnTypeId];
+						expr.erase(expr.begin() + i - 1);
+						i -= 1;
+						found = true;
+					}
+					if (found) continue;
+				}
+				break;
+			}
+
+			while (i < expr.size() - 1)
+			{
+				if (expr[i + 1].type == es_operator)
+				{
+					bool found = false;
+					for (unsigned int f = 0; f < type->function.size(); f++) if ((type->functionId[f] == expr[i + 1].lutId && expr[i + 1].operatorType == 0) || (typeIdLut[type->returnTypeId] == expr[i + 1].instanceType && expr[i + 1].operatorType == 1))
+					{
+						if (type->function[f]->maxVariables != 0) continue;
+						if (expr[i + 1].operatorType == 0) { expr[i].unaryOperators.push_back(type->function[f]->lutId); expr[i].unaryIsCast.push_back(false); }
+						else if (expr[i + 1].operatorType == 1) { expr[i].unaryOperators.push_back(type->returnTypeId); expr[i].unaryIsCast.push_back(true); }
+						else return { NULL, at_unexpectedToken };
+						type = typeIdLut[type->function[f]->returnTypeId];
+						expr.erase(expr.begin() + i + 1);
+						found = true;
+					}
+					if (found) continue;
+
+				}
+				break;
+			}
+
+			expr[i].afterType = type;
+		}
+		else if (expr[i].type == es_open)
+		{
+			while (i > 1)
+			{
+				if (expr[i - 1].type == es_operator && expr[i - 2].type == es_operator)
+				{
+					if (expr[i - 1].operatorType == 0) { expr[i].unaryOperators.push_back(expr[i - 1].lutId); expr[i].unaryIsCast.push_back(false); }
+					else if (expr[i - 1].operatorType == 1) { expr[i].unaryOperators.push_back(typeLutGetId(expr[i - 1].instanceType)); expr[i].unaryIsCast.push_back(true); }
+					else return { NULL, at_unexpectedToken };
+					expr.erase(expr.begin() + i - 1);
+					i -= 1;
+					continue;
+				}
+				break;
+			}
+		}
+	}
+
+	std::vector<unsigned int> parenthesesStart;
+
+	for (unsigned int i = 0; i < expr.size(); i++)
+	{
+		if (expr[i].type == es_open) parenthesesStart.push_back(i);
+		else if (expr[i].type == es_function)
+		{
+			parenthesesStart.push_back(i);
+			i += 1;
+		}
+		else if (expr[i].type == es_close)
+		{
+			while (i < expr.size() - 2)
+			{
+				if (expr[i + 1].type == es_operator && expr[i + 2].type == es_operator)
+				{
+					if (expr[i + 1].operatorType == 0) { expr[parenthesesStart.back()].unaryOperators.push_back(expr[i + 1].lutId); expr[parenthesesStart.back()].unaryIsCast.push_back(false); }
+					else if (expr[i + 1].operatorType == 1) { expr[parenthesesStart.back()].unaryOperators.push_back(typeLutGetId(expr[i + 1].instanceType)); expr[parenthesesStart.back()].unaryIsCast.push_back(true); }
+					else return { NULL, at_unexpectedToken };
+					expr.erase(expr.begin() + i + 1);
+					parenthesesStart.pop_back();
+					continue;
+				}
+				break;
+			}
+		}
+	}
+
+	TreeStructureReturn exprResult = evalExpr(thisTS, expr);
+	if (exprResult.at == at_unexpectedToken) return { 0, at_unexpectedToken };
+
+	if (exprResult.ts != typeIdLut[preferedType])
+	{
+		for (unsigned int f = 0; f < exprResult.ts->function.size(); f++) if (exprResult.ts->function[f]->returnTypeId == preferedType)
+		{
+			if (exprResult.ts->function[f]->maxVariables != 0) continue;
+			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, exprResult.ts->function[f]->size, 1, exprResult.ts->function[f]->getCodeStart(&codePointerLut, &codeTreeStruct) });
+			return { preferedType, at_normal };
+		}
+	}
+
+	return { typeLutGetId(exprResult.ts), at_normal };
+}
+
+Compiler::TreeStructureReturn Compiler::evalExpr(TreeStructure *thisTS, std::vector<ExprStruct> expr)
+{
+	if (expr.size() == 1)
+	{
+		if (expr[0].type == es_variable)
+		{
+			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_push, expr[0].scopesBack, expr[0].indexFromThere });
+			TreeStructure *type = expr[0].instanceType;
+
+			for (unsigned int i = 0; i < expr[0].unaryOperators.size(); i++)
+			{
+				TreeStructure *unaryOperator = NULL;
+				for (unsigned int f = 0; f < type->function.size(); f++) if ((type->functionId[f] == expr[0].unaryOperators[i] && !expr[0].unaryIsCast[i]) || (type->returnTypeId == expr[0].unaryOperators[i] && expr[0].unaryIsCast[i]))
+				{
+					if (type->function[f]->maxVariables != 0) continue;
+					unaryOperator = type->function[f];
+					type = typeIdLut[unaryOperator->returnTypeId];
+				}
+				if (unaryOperator == NULL) return { NULL, at_unexpectedToken };
+				thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, unaryOperator->size, 1, unaryOperator->getCodeStart(&codePointerLut, &codeTreeStruct) });
+			}
+
+			return { type, at_normal };
+		}
+		else if (expr[0].type == es_literal)
+		{
+			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_pushLiteral, expr[0].literalId });
+			TreeStructure *type = expr[0].instanceType;
+
+			for (unsigned int i = 0; i < expr[0].unaryOperators.size(); i++)
+			{
+				TreeStructure *unaryOperator = NULL;
+				for (unsigned int f = 0; f < type->function.size(); f++) if ((type->functionId[f] == expr[0].unaryOperators[i] && !expr[0].unaryIsCast[i]) || (type->returnTypeId == expr[0].unaryOperators[i] && expr[0].unaryIsCast[i]))
+				{
+					if (type->function[f]->maxVariables != 0) continue;
+					unaryOperator = type->function[f];
+					type = typeIdLut[unaryOperator->returnTypeId];
+				}
+				if (unaryOperator == NULL) return { NULL, at_unexpectedToken };
+				thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, unaryOperator->size, 1, unaryOperator->getCodeStart(&codePointerLut, &codeTreeStruct) });
+			}
+
+			return { type, at_normal };
+		}
+		else if (expr[0].type == es_stored)
+		{
+			return { expr[0].instanceType, at_normal };
+		}
+		else return { NULL, at_unexpectedToken };
+	}
+	else if (expr.front().type == es_open && expr.back().type == es_close)
+	{
+		TreeStructureReturn exprResult = evalExpr(thisTS, std::vector<ExprStruct>(&expr.front() + 1, &expr.back()));
+		if (exprResult.at == at_unexpectedToken) return { NULL, at_unexpectedToken };
+
+		TreeStructure *type = exprResult.ts;
+
+		for (unsigned int i = 0; i < expr[0].unaryOperators.size(); i++)
+		{
+			TreeStructure *unaryOperator = NULL;
+			for (unsigned int f = 0; f < type->function.size(); f++) if ((type->functionId[f] == expr[0].unaryOperators[i] && !expr[0].unaryIsCast[i]) || (type->returnTypeId == expr[0].unaryOperators[i] && expr[0].unaryIsCast[i]))
+			{
+				if (type->function[f]->maxVariables != 0) continue;
+				unaryOperator = type->function[f];
+				type = typeIdLut[unaryOperator->returnTypeId];
+			}
+			if (unaryOperator == NULL) return { NULL, at_unexpectedToken };
+			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, unaryOperator->size, 1, unaryOperator->getCodeStart(&codePointerLut, &codeTreeStruct) });
+		}
+
+		return { type, at_normal };
+	}
+	else if (expr.front().type == es_function)
+	{
+		if (expr[1].type != es_open) return { NULL, at_unexpectedToken };
+		int parentheses = 1;
+		unsigned int lastParameter = 2, parameterCount = 0, functionEnd = 0;
+		for (unsigned int i = 2; i < expr.size(); i++)
+		{
+			if (expr[i].type == es_open) parentheses++;
+			if (expr[i].type == es_close) parentheses--;
+			if (parentheses < 0) return { NULL, at_unexpectedToken };
+			if (expr[i].type == es_seperator || parentheses == 0)
+			{
+				if (parentheses > 1) continue;
+
+				TreeStructureReturn exprParameterResult = evalExpr(thisTS, std::vector<ExprStruct>(&expr.front() + lastParameter, &expr.front() + i));
+				if (exprParameterResult.at == at_unexpectedToken) return { NULL, at_unexpectedToken };
+				if (typeIdLut[expr[0].function->variableType[parameterCount]] != exprParameterResult.ts) return { NULL, at_unexpectedToken };
+				parameterCount++;
+				lastParameter = i + 1;
+
+				if (parentheses == 0)
+				{
+					functionEnd = i;
+					break;
+				}
+			}
+		}
+		if (parentheses != 0) return { NULL, at_unexpectedToken };
+
+		thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, expr[0].function->size, 2, expr[0].function->getCodeStart(&codePointerLut, &codeTreeStruct) });
+
+		TreeStructure *type = typeIdLut[expr[0].function->returnTypeId];
+
+		for (unsigned int i = 0; i < expr[0].unaryOperators.size(); i++)
+		{
+			TreeStructure *unaryOperator = NULL;
+			for (unsigned int f = 0; f < type->function.size(); f++) if ((type->functionId[f] == expr[0].unaryOperators[i] && !expr[0].unaryIsCast[i]) || (type->returnTypeId == expr[0].unaryOperators[i] && expr[0].unaryIsCast[i]))
+			{
+				if (type->function[f]->maxVariables != 0) continue;
+				unaryOperator = type->function[f];
+				type = typeIdLut[unaryOperator->returnTypeId];
+			}
+			if (unaryOperator == NULL) return { NULL, at_unexpectedToken };
+			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, unaryOperator->size, 1, unaryOperator->getCodeStart(&codePointerLut, &codeTreeStruct) });
+		}
+
+		expr[functionEnd] = { es_stored, 0, 0, type };
+
+		TreeStructureReturn exprResult = evalExpr(thisTS, std::vector<ExprStruct>(&expr.front() + functionEnd, &expr.back() + 1));
+		if (exprResult.at == at_unexpectedToken) return { NULL, at_unexpectedToken };
+
+		return { exprResult.ts, at_normal };
+	}
+	else
+	{
+		unsigned int bestOperator;
+		char operatorLevel = -1;
+		int parentheses = 0;
+		for (unsigned int i = 0; i < expr.size(); i++)
+		{
+			if (expr[i].type == es_open) parentheses++;
+			if (expr[i].type == es_close) parentheses--;
+			if (parentheses < 0) return { NULL, at_unexpectedToken };
+			if (parentheses == 0 && expr[i].type == es_operator && expr[i].operatorType != 1)
+			{
+				char thisOparatorLevel = 1;
+				if (strcmp(lut[expr[i].lutId], "=") == 0 || strcmp(lut[expr[i].lutId], "+=") == 0 || strcmp(lut[expr[i].lutId], "-=") == 0 || strcmp(lut[expr[i].lutId], "*=") == 0 || strcmp(lut[expr[i].lutId], "/=") == 0) thisOparatorLevel = 0;
+				else if (strcmp(lut[expr[i].lutId], "&&") == 0 || strcmp(lut[expr[i].lutId], "||") == 0) thisOparatorLevel = 3;
+				else if (strcmp(lut[expr[i].lutId], "==") == 0 || strcmp(lut[expr[i].lutId], "!=") == 0 || strcmp(lut[expr[i].lutId], "<") == 0 || strcmp(lut[expr[i].lutId], ">") == 0 || strcmp(lut[expr[i].lutId], "<=") == 0 || strcmp(lut[expr[i].lutId], ">=") == 0) thisOparatorLevel = 2;
+				else if (strcmp(lut[expr[i].lutId], "*") == 0 || strcmp(lut[expr[i].lutId], "/") == 0) thisOparatorLevel = 0;
+				if (thisOparatorLevel > operatorLevel)
+				{
+					bestOperator = i;
+					operatorLevel = thisOparatorLevel;
+				}
+			}
+		}
+		parentheses = 0;
+		for (unsigned int i = expr.size() - 1; i > 0; i--)
+		{
+			if (expr[i].type == es_close) parentheses++;
+			if (expr[i].type == es_open) parentheses--;
+			if (parentheses < 0) return { NULL, at_unexpectedToken };
+			if (parentheses == 0 && expr[i].type == es_operator && expr[i].operatorType != 1)
+			{
+				char thisOparatorLevel = 1;
+				if (strcmp(lut[expr[i].lutId], "=") == 0 || strcmp(lut[expr[i].lutId], "+=") == 0 || strcmp(lut[expr[i].lutId], "-=") == 0 || strcmp(lut[expr[i].lutId], "*=") == 0 || strcmp(lut[expr[i].lutId], "/=") == 0) thisOparatorLevel = 4;
+				else if (strcmp(lut[expr[i].lutId], "&&") == 0 || strcmp(lut[expr[i].lutId], "||") == 0) thisOparatorLevel = 3;
+				else if (strcmp(lut[expr[i].lutId], "==") == 0 || strcmp(lut[expr[i].lutId], "!=") == 0 || strcmp(lut[expr[i].lutId], "<") == 0 || strcmp(lut[expr[i].lutId], ">") == 0 || strcmp(lut[expr[i].lutId], "<=") == 0 || strcmp(lut[expr[i].lutId], ">=") == 0) thisOparatorLevel = 2;
+				else if (strcmp(lut[expr[i].lutId], "*") == 0 || strcmp(lut[expr[i].lutId], "/") == 0) thisOparatorLevel = 0;
+				if (thisOparatorLevel > operatorLevel)
+				{
+					bestOperator = i;
+					operatorLevel = thisOparatorLevel;
+				}
+			}
+		}
+		if (operatorLevel == -1) return { NULL, at_unexpectedToken };
+		if (bestOperator == 0 || bestOperator == expr.size() - 1) return { NULL, at_unexpectedToken };
+		if (expr[bestOperator - 1].type == es_operator || expr[bestOperator + 1].type == es_operator) return { NULL, at_unexpectedToken };
+
+		TreeStructureReturn expr1Result = evalExpr(thisTS, std::vector<ExprStruct>(&expr.front(), &expr.front() + bestOperator));
+		TreeStructureReturn expr2Result = evalExpr(thisTS, std::vector<ExprStruct>(&expr.front() + bestOperator + 1, &expr.back() + 1));
+		if (expr1Result.at == at_unexpectedToken || expr2Result.at == at_unexpectedToken) return { NULL, at_unexpectedToken };
+
+		TreeStructure *operatorFunction = NULL;
+		for (unsigned int i = 0; i < expr1Result.ts->function.size(); i++) if (expr1Result.ts->functionId[i] == expr[bestOperator].lutId) operatorFunction = expr1Result.ts->function[i];
+		if (operatorFunction == NULL) return { NULL, at_unexpectedToken };
+		if (typeIdLut[operatorFunction->variableType[0]] != expr2Result.ts) return { NULL, at_unexpectedToken };
+		thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, operatorFunction->size, 2, operatorFunction->getCodeStart(&codePointerLut, &codeTreeStruct) });
+		return { typeIdLut[operatorFunction->returnTypeId], at_normal };
+	}
+
+	return { NULL, at_unexpectedToken };
 }
 
 bool Compiler::checkForToken(unsigned int index, const char* token)
@@ -535,9 +1080,135 @@ bool Compiler::isTokenObjectType(unsigned int index, TreeStructure *thisTS)
 			lastToken = thisTS->object[objectIndex];
 			return true;
 		}
-		if (!found) for (unsigned int nameIndex = 0; nameIndex < thisTS->nameId.size(); nameIndex++) if (checkForToken(index, lut[thisTS->nameId[nameIndex]])) found = true;
+		if (!found) for (unsigned int nameIndex = 0; nameIndex < thisTS->nameId.size(); nameIndex++) if (checkForToken(index, lut[thisTS->nameId[nameIndex]]))
+		{
+			found = true;
+			thisTS = thisTS->name[nameIndex];
+		}
 		if (!found) for (unsigned int instanceIndex = 0; instanceIndex < thisTS->instanceId.size(); instanceIndex++) if (checkForToken(index, lut[thisTS->instanceId[instanceIndex]])) return false;
 		if (!found) for (unsigned int functionIndex = 0; functionIndex < thisTS->functionId.size(); functionIndex++) if (checkForToken(index, lut[thisTS->functionId[functionIndex]])) return false;
+	}
+
+	return false;
+}
+
+bool Compiler::isTokenInstance(unsigned int index, TreeStructure *thisTS)
+{
+	bool found = false;
+	lastTokenLength = 1;
+	scopesBack = 0;
+
+	while (!found)
+	{
+		indexFromThere = Interpreter::Thread::ScopeMinSize;
+
+		for (unsigned int objectIndex = 0; objectIndex < thisTS->objectId.size(); objectIndex++) if (checkForToken(index, lut[thisTS->objectId[objectIndex]])) return false;
+		if (!found) for (unsigned int nameIndex = 0; nameIndex < thisTS->nameId.size(); nameIndex++) if (checkForToken(index, lut[thisTS->nameId[nameIndex]])) found = true;
+		if (!found) for (unsigned int instanceIndex = 0; instanceIndex < thisTS->instanceId.size(); instanceIndex++)
+		{
+			if (checkForToken(index, lut[thisTS->instanceId[instanceIndex]]))
+			{
+				lastToken = thisTS;
+				lastIndex = instanceIndex;
+
+				return true;
+			}
+
+			indexFromThere += thisTS->instanceType[instanceIndex]->size;
+		}
+		if (!found) for (unsigned int functionIndex = 0; functionIndex < thisTS->functionId.size(); functionIndex++) if (checkForToken(index, lut[thisTS->functionId[functionIndex]])) return false;
+
+		if (!thisTS->hasParent) break;
+		if (!found) { thisTS = thisTS->parent; scopesBack++; }
+	}
+
+	TreeStructure* truePosition = thisTS;
+	lastToken = thisTS;
+
+	while (found)
+	{
+		found = false;
+
+		if (!checkForToken(index + 1, ".")) return false;
+		index += 2;
+		lastTokenLength += 2;
+
+		for (unsigned int objectIndex = 0; objectIndex < thisTS->objectId.size(); objectIndex++) if (checkForToken(index, lut[thisTS->objectId[objectIndex]])) return false;
+		if (!found) for (unsigned int nameIndex = 0; nameIndex < thisTS->nameId.size(); nameIndex++) if (checkForToken(index, lut[thisTS->nameId[nameIndex]]))
+		{
+			found = true;
+			thisTS = thisTS->name[nameIndex];
+		}
+		if (!found) for (unsigned int instanceIndex = 0; instanceIndex < thisTS->instanceId.size(); instanceIndex++) if (checkForToken(index, lut[thisTS->instanceId[instanceIndex]]))
+		{
+			break;
+		}
+		if (!found) for (unsigned int functionIndex = 0; functionIndex < thisTS->functionId.size(); functionIndex++) if (checkForToken(index, lut[thisTS->functionId[functionIndex]])) return false;
+	}
+
+	indexFromThere = Interpreter::Thread::ScopeMinSize;
+
+	for (unsigned int instanceIndex = 0; instanceIndex < truePosition->instanceId.size(); instanceIndex++)
+	{
+		if (checkForToken(index, lut[truePosition->instanceId[instanceIndex]]) && truePosition->nameHost[instanceIndex] == thisTS)
+		{
+			lastIndex = instanceIndex;
+
+			return true;
+		}
+
+		indexFromThere += truePosition->instanceType[instanceIndex]->size;
+	}
+
+	return false;
+}
+
+bool Compiler::isTokenFunction(unsigned int index, TreeStructure *thisTS, bool includeOperators)
+{
+	bool found = false;
+	lastTokenLength = 1;
+
+	while (!found)
+	{
+		for (unsigned int objectIndex = 0; objectIndex < thisTS->objectId.size(); objectIndex++) if (checkForToken(index, lut[thisTS->objectId[objectIndex]])) return false;
+		if (!found) for (unsigned int nameIndex = 0; nameIndex < thisTS->nameId.size(); nameIndex++) if (checkForToken(index, lut[thisTS->nameId[nameIndex]])) found = true;
+		if (!found) for (unsigned int instanceIndex = 0; instanceIndex < thisTS->instanceId.size(); instanceIndex++) if (checkForToken(index, lut[thisTS->instanceId[instanceIndex]])) return false;
+		if (!found) for (unsigned int functionIndex = 0; functionIndex < thisTS->functionId.size(); functionIndex++) if (checkForToken(index, lut[thisTS->functionId[functionIndex]]))
+		{
+			if (tokenType[index] != 0 && !includeOperators) continue;
+			lastToken = thisTS->function[functionIndex];
+			lastParent = thisTS;
+			lastIndex = functionIndex;
+			return true;
+		}
+
+		if (!thisTS->hasParent) break;
+		if (!found) thisTS = thisTS->parent;
+	}
+
+	while (found)
+	{
+		found = false;
+
+		if (!checkForToken(index + 1, ".")) return false;
+		index += 2;
+		lastTokenLength += 2;
+
+		for (unsigned int objectIndex = 0; objectIndex < thisTS->objectId.size(); objectIndex++) if (checkForToken(index, lut[thisTS->objectId[objectIndex]])) return false;
+		if (!found) for (unsigned int nameIndex = 0; nameIndex < thisTS->nameId.size(); nameIndex++) if (checkForToken(index, lut[thisTS->nameId[nameIndex]]))
+		{
+			found = true;
+			thisTS = thisTS->name[nameIndex];
+		}
+		if (!found) for (unsigned int instanceIndex = 0; instanceIndex < thisTS->instanceId.size(); instanceIndex++) if (checkForToken(index, lut[thisTS->instanceId[instanceIndex]])) return false;
+		if (!found) for (unsigned int functionIndex = 0; functionIndex < thisTS->functionId.size(); functionIndex++) if (checkForToken(index, lut[thisTS->functionId[functionIndex]]))
+		{
+			if (tokenType[index] != 0 && !includeOperators) continue;
+			lastToken = thisTS->function[functionIndex];
+			lastParent = thisTS;
+			lastIndex = functionIndex;
+			return true;
+		}
 	}
 
 	return false;
@@ -600,7 +1271,7 @@ unsigned int Compiler::lutGetId(unsigned int index)
 {
 	for (unsigned int lutIndex = 0; lutIndex < lut.size(); lutIndex++)
 	{
-		for (unsigned int i = 0; lut[i] != '\0' && tokenStart[index] + i <= tokenEnd[index]; i++)
+		for (unsigned int i = 0; lut[lutIndex][i] != '\0' && tokenStart[index] + i <= tokenEnd[index]; i++)
 		{
 			if (rawCode[tokenStart[index] + i] != lut[lutIndex][i]) break;
 			if (tokenStart[index] + i == tokenEnd[index] && lut[lutIndex][i + 1] == '\0') return lutIndex;
@@ -613,4 +1284,28 @@ unsigned int Compiler::lutGetId(unsigned int index)
 
 	lut.push_back(lutToken);
 	return lut.size() - 1;
+}
+
+unsigned int Compiler::typeLutGetId(TreeStructure* type)
+{
+	for (unsigned int lutIndex = 0; lutIndex < typeIdLut.size(); lutIndex++) if (typeIdLut[lutIndex] == type) return lutIndex;
+	typeIdLut.push_back(type);
+	return typeIdLut.size() - 1;
+}
+
+unsigned int Compiler::getLiteralId(char* data, unsigned int typeId)
+{
+	unsigned int size = typeIdLut[typeId]->size;
+	for (unsigned int i = 0; i < literalTypeId.size(); i++) if (literalTypeId[i] == typeId)
+	{
+		bool isSame = true;
+		for (unsigned int d = 0; d < size; d++) if (((char*)literalPointer[i])[d] != data[d]) { isSame = false; break; }
+		if (isSame) return i;
+	}
+
+	char* newLiteral = (char*)malloc(size);
+	for (unsigned int i = 0; i < size; i++) newLiteral[i] = data[i];
+	literalPointer.push_back((uintptr_t)newLiteral);
+	literalTypeId.push_back(typeId);
+	return literalPointer.size() - 1;
 }

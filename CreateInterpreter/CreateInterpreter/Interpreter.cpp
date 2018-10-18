@@ -51,6 +51,10 @@ void Interpreter::Thread::executeLine(Interpreter parent)
 		//code[2] = jumpAmount
 		codeIndex += 3;
 	}
+	else if (code[0] == cmd_clearWS)
+	{
+		codeIndex += 1;
+	}
 	else
 	{
 		//TODO: error("Fatal error, program is corrupt")

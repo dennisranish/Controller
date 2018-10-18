@@ -14,17 +14,18 @@ class Interpreter
 		class Thread
 		{
 			public:
-				enum codeCommands { cmd_newScope, cmd_callNative, cmd_push, cmd_pushLiteral, cmd_copyParameter, cmd_jump, cmd_checkJump, cmd_endScope, cmd_returnValue};
+				enum codeCommands { cmd_newScope, cmd_callNative, cmd_push, cmd_pushLiteral, cmd_copyParameter, cmd_jump, cmd_checkJump, cmd_endScope, cmd_returnValue, cmd_clearWS };
 				/*
 				newScope sizeInBytes(unsgined)(from scope list create by compiler) parameterCount(unsigned) codeLutIndex(unsigned) //codeIndex is already set and variables are initialized; previous scope needs to be set
 				callNative nativeFunctionIndex(unsigned) //function recives pointerToScope
 				push scopesBack(unsigned) indexFromThere(unsigned)
-				pushLiteral pointer(unsigned)
+				pushLiteral id(unsigned)
 				copyParameter sizeInBytes(unsigned) positionToCopy(unsigned) defaultValuePointer(unsigned)
 				jump jumpAmount(signed) //adds jumpAmount to codeIndex
 				checkJump jumpAmount(signed) //adds jumpAmount to codeIndex if top value in workingSrack is false (removes top element from workingStack) otherwise adds 2 (to get to the next line)
 				endScope amount(unsigned) jumpAmount(unsigned) //ends that many scopes
 				returnValue amount(unsigned) //ends that many scopes, copies value and adds to workingstack
+				clearWS //clears working stack
 				*/
 
 				uintptr_t scope; //previous, parent, workingStackPointer, workingStackType, workingStackDetails, codeIndex, parametersLeft, data...

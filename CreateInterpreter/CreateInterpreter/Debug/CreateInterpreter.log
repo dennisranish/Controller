@@ -1,2 +1,5 @@
-﻿  CreateInterpreter.cpp
+﻿  Compiler.cpp
+c:\users\denni\onedrive\documents\github\controller\createinterpreter\createinterpreter\compiler.cpp(105): warning C4018: '>=': signed/unsigned mismatch
+c:\users\denni\onedrive\documents\github\controller\createinterpreter\createinterpreter\compiler.cpp(140): warning C4018: '>=': signed/unsigned mismatch
+c:\users\denni\onedrive\documents\github\controller\createinterpreter\createinterpreter\compiler.cpp(671): warning C4244: 'initializing': conversion from 'double' to 'int', possible loss of data
   CreateInterpreter.vcxproj -> C:\Users\denni\OneDrive\Documents\GitHub\Controller\CreateInterpreter\Debug\CreateInterpreter.exe
