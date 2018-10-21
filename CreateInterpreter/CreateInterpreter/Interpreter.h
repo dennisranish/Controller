@@ -8,18 +8,24 @@ class Interpreter
 {
 	public:
 		unsigned int* codePointer;
-		void(**function)(uintptr_t parentScope, uintptr_t previousScope, unsigned int parameterCount, uintptr_t thisPointer);
+		void(**function)(uintptr_t scope);
 		unsigned int* codePointerLut;
 		unsigned int* typeSizeLut;
+		unsigned int* literalPointer;
+		unsigned int* literalTypeId;
+		unsigned int currentThread = 0;
+		bool error = false;
+		bool endOfThread;
+		unsigned int globalSize;
 		class Thread
 		{
 			public:
 				enum codeCommands { cmd_newScope, cmd_callNative, cmd_push, cmd_pushLiteral, cmd_copyParameter, cmd_jump, cmd_checkJump, cmd_endScope, cmd_returnValue, cmd_clearWS };
 				/*
-				newScope sizeInBytes(unsgined)(from scope list create by compiler) parameterCount(unsigned) codeLutIndex(unsigned) //codeIndex is already set and variables are initialized; previous scope needs to be set
+				newScope sizeInBytes(unsgined)(from scope list create by compiler) parameterCount(unsigned) codeLutIndex(unsigned) parentScopesBack(unsigned) //codeIndex is already set and variables are initialized; previous scope needs to be set
 				callNative nativeFunctionIndex(unsigned) //function recives pointerToScope
-				push scopesBack(unsigned) indexFromThere(unsigned)
-				pushLiteral id(unsigned)
+				push scopesBack(unsigned) indexFromThere(unsigned) typeId(unsigned)
+				pushLiteral id(unsigned) typeId(unsigned)
 				copyParameter sizeInBytes(unsigned) positionToCopy(unsigned) defaultValuePointer(unsigned)
 				jump jumpAmount(signed) //adds jumpAmount to codeIndex
 				checkJump jumpAmount(signed) //adds jumpAmount to codeIndex if top value in workingSrack is false (removes top element from workingStack) otherwise adds 2 (to get to the next line)
@@ -31,16 +37,16 @@ class Interpreter
 				uintptr_t scope; //previous, parent, workingStackPointer, workingStackType, workingStackDetails, codeIndex, parametersLeft, data...
 				const static unsigned int ScopeMinSize = 7 * 4;
 
-				//workingStackType: isPointer
+				//workingStackDetails: 0: normal, 1: literal, 2: stored(needs to be deleted after used)
 
-				void executeLine(Interpreter parent);
+				bool executeLine(Interpreter *parent);
 		};
 		std::vector<Thread> thread;
 		std::vector<unsigned int> threadId;
 		
-		//void addNativeFunctionVoid(char* name, void (*function)(unsigned int*));
-		//void addNativeFunction(char* name, unsigned int* (*function)(unsigned int*));
-		//void addNativeFunction(char* name, void(*function)(uintptr_t parentScope, uintptr_t previousScope, unsigned int parameterCount, uintptr_t thisPointer));
+		void startThread();
+		bool runProgram(unsigned long millisceonds);
+		void kill();
 };
 
 //4 * (4 + 7) + (6 + 7)

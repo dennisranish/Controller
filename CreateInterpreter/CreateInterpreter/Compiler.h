@@ -9,7 +9,7 @@
 class Compiler
 {
 	public:
-		void(**nativeFunction)(uintptr_t parentScope, uintptr_t previousScope, unsigned int parameterCount, uintptr_t thisPointer);
+		void(**nativeFunction)(uintptr_t scope);
 		char** nativeFunctionName;
 		unsigned int nativeFunctionCount = 0;
 
@@ -101,6 +101,8 @@ class Compiler
 			std::vector<unsigned int> unaryOperators;//lutId, or typeIdLut
 			std::vector<bool> unaryIsCast;
 
+			unsigned int funcScopesBack;
+
 			//Literal: literalId                  , TreestructrePointer(type)
 			//Variable: scopesBack, indexFromThere, TreestructrePointer(type)
 			//Stored:                             , TreestructrePointer(type)
@@ -137,7 +139,7 @@ class Compiler
 		}
 
 		//Program compile functions
-		void compileCode();
+		bool compileCode(Interpreter *interpreter);
 
 		TreeStructureReturn create(TreeStructure *parent, TreeStructureTypes tsType, bool hasParent, bool singleLine, bool allowInstances, bool allowRunningCode, bool writeCodeToRoot, unsigned int startingSize, bool takeParameters, bool doLoop, unsigned int lutId = UINT32_MAX, unsigned int returnType = 0, bool addAsObject = false);
 		ExprStructReturn evaluateExpretion(TreeStructure *thisTS, const char* end, unsigned int preferedType);
@@ -148,12 +150,12 @@ class Compiler
 		bool isTokenInstance(unsigned int index, TreeStructure *thisTS); unsigned int lastIndex; unsigned int scopesBack; unsigned int indexFromThere;
 		bool isTokenFunction(unsigned int index, TreeStructure *thisTS, bool includeOperators); TreeStructure* lastParent;
 		char* getTokenFullName(unsigned int index, TreeStructure *thisTS);
-		void addNativeFunction(const char* name, void(*function)(uintptr_t parentScope, uintptr_t previousScope, unsigned int parameterCount, uintptr_t thisPointer));
+		void addNativeFunction(const char* name, void(*function)(uintptr_t scope));
 		unsigned int lutGetId(unsigned int index);
 		unsigned int typeLutGetId(TreeStructure* type);
 		unsigned int getLiteralId(char* data, unsigned int typeId);
 		
-	private:
+
 		std::vector<std::vector<char*>> standardRule;
 		std::vector<char> standardRuleMaxTokenLength;
 

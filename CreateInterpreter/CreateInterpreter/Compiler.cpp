@@ -154,10 +154,33 @@ void Compiler::parseCode(const char* code)
 	tokenEnd.shrink_to_fit();
 }
 
-void Compiler::compileCode()
+bool Compiler::compileCode(Interpreter *interpreter)
 {
 	TreeStructureReturn a = create(NULL, tst_scope, false, false, true, true, false, Interpreter::Thread::ScopeMinSize, false, true);
-	a;
+	if (a.at == at_unexpectedToken) return false;
+
+	std::vector<unsigned int> *fullCode = new std::vector<unsigned int>();
+	std::vector<unsigned int> *typeSizeLut = new std::vector<unsigned int>();
+
+	fullCode->insert(fullCode->end(), a.ts->code.begin(), a.ts->code.end());
+
+	for (unsigned int i = 0; i < codeTreeStruct.size(); i++)
+	{
+		codePointerLut[i] = fullCode->size();
+		fullCode->insert(fullCode->end(), codeTreeStruct[i]->code.begin(), codeTreeStruct[i]->code.end());
+	}
+
+	for (unsigned int i = 0; i < typeIdLut.size(); i++) typeSizeLut->push_back(typeIdLut[i]->size);
+
+	interpreter->codePointer = &fullCode->at(0);
+	interpreter->function = nativeFunction;
+	interpreter->codePointerLut = &codePointerLut[0];
+	interpreter->typeSizeLut = &typeSizeLut->at(0);
+	interpreter->literalPointer = &literalPointer[0];
+	interpreter->literalTypeId = &literalTypeId[0];
+	interpreter->globalSize = a.ts->size;
+
+	return true;
 }
 
 Compiler::TreeStructureReturn Compiler::create(TreeStructure *parent, TreeStructureTypes tsType, bool hasParent, bool singleLine, bool allowInstances, bool allowRunningCode, bool writeCodeToRoot, unsigned int startingSize, bool takeParameters, bool doLoop, unsigned int lutId, unsigned int returnType, bool addAsObject)
@@ -175,6 +198,7 @@ Compiler::TreeStructureReturn Compiler::create(TreeStructure *parent, TreeStruct
 		if (!checkForToken(tokenIndex, "(")) return { thisTS, at_unexpectedToken };
 		tokenIndex += 1;
 		bool defaulValue = false;
+		unsigned int parameterPosition = Interpreter::Thread::ScopeMinSize;
 
 		while (true)
 		{
@@ -187,6 +211,8 @@ Compiler::TreeStructureReturn Compiler::create(TreeStructure *parent, TreeStruct
 			thisTS->instanceId.push_back(instanceId);
 			thisTS->instanceType.push_back(object);
 			thisTS->variableType.push_back(typeLutGetId(object));
+			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_copyParameter, parameterPosition, 0 });
+			parameterPosition += object->size;
 			if (checkForToken(tokenIndex + 1, "="))
 			{
 				ExprStructReturn exprStructReturn = evaluateExpretion(thisTS, ",)", 0);
@@ -228,7 +254,7 @@ Compiler::TreeStructureReturn Compiler::create(TreeStructure *parent, TreeStruct
 			tokenIndex += 1;
 			TreeStructureReturn newScope = create(thisTS, tst_scope, true, false, true, true, false, Interpreter::Thread::ScopeMinSize, false, true);
 			if (newScope.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
-			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, newScope.ts->size, 0, newScope.ts->codeRoot->getCodeStart(&codePointerLut, &codeTreeStruct) });
+			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, newScope.ts->size, 0, newScope.ts->codeRoot->getCodeStart(&codePointerLut, &codeTreeStruct), 1 });
 		}
 		else if (checkForToken(tokenIndex, "}"))
 		{
@@ -351,7 +377,7 @@ Compiler::TreeStructureReturn Compiler::create(TreeStructure *parent, TreeStruct
 				if (newScope.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
 
 				thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_checkJump, 3 });
-				thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, newScope.ts->size, 0, newScope.ts->codeRoot->getCodeStart(&codePointerLut, &codeTreeStruct) });
+				thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, newScope.ts->size, 0, newScope.ts->codeRoot->getCodeStart(&codePointerLut, &codeTreeStruct), 1 });
 				if (last) break;
 				thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_jump, 0 });
 				statmentPointer.push_back(&thisTS->codeRoot->code.back());
@@ -400,7 +426,7 @@ Compiler::TreeStructureReturn Compiler::create(TreeStructure *parent, TreeStruct
 			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_checkJump, 0 });
 			unsigned int* writeStatmentEnd = &thisTS->codeRoot->code.back();
 			unsigned int position = thisTS->codeRoot->code.size() - 2;
-			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, 0, 0, 0 });
+			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, 0, 0, 0, 1 });
 
 			exprStructReturn = evaluateExpretion(thisTS, ")", 0);
 			if (exprStructReturn.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
@@ -433,7 +459,7 @@ Compiler::TreeStructureReturn Compiler::create(TreeStructure *parent, TreeStruct
 			if (checkForToken(tokenIndex, "{")) { tokenIndex += 1; newScope = create(thisTS, tst_scopeWhileLoop, true, false, true, true, false, Interpreter::Thread::ScopeMinSize, false, true); }
 			else newScope = create(thisTS, tst_scopeWhileLoop, true, true, true, true, false, 7, false, true);
 			if (newScope.at == at_unexpectedToken) return { thisTS, at_unexpectedToken };
-			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, newScope.ts->size, 0, newScope.ts->codeRoot->getCodeStart(&codePointerLut, &codeTreeStruct) });
+			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, newScope.ts->size, 0, newScope.ts->codeRoot->getCodeStart(&codePointerLut, &codeTreeStruct), 1 });
 			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_jump, statmentStart - thisTS->codeRoot->code.size() });
 		}
 		else if (checkForToken(tokenIndex, "break"))
@@ -653,6 +679,7 @@ Compiler::ExprStructReturn Compiler::evaluateExpretion(TreeStructure *thisTS, co
 		{
 			i += lastTokenLength;
 			expr.push_back({ es_function, 0, 0, lastToken });
+			expr[expr.size() - 1].funcScopesBack = scopesBack;
 		}
 		else if (checkForToken(i, "false"))
 		{
@@ -855,7 +882,7 @@ Compiler::TreeStructureReturn Compiler::evalExpr(TreeStructure *thisTS, std::vec
 	{
 		if (expr[0].type == es_variable)
 		{
-			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_push, expr[0].scopesBack, expr[0].indexFromThere });
+			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_push, expr[0].scopesBack, expr[0].indexFromThere, typeLutGetId(expr[0].instanceType) });
 			TreeStructure *type = expr[0].instanceType;
 
 			for (unsigned int i = 0; i < expr[0].unaryOperators.size(); i++)
@@ -875,7 +902,7 @@ Compiler::TreeStructureReturn Compiler::evalExpr(TreeStructure *thisTS, std::vec
 		}
 		else if (expr[0].type == es_literal)
 		{
-			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_pushLiteral, expr[0].literalId });
+			thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_pushLiteral, expr[0].literalId, typeLutGetId(expr[0].instanceType) });
 			TreeStructure *type = expr[0].instanceType;
 
 			for (unsigned int i = 0; i < expr[0].unaryOperators.size(); i++)
@@ -950,7 +977,7 @@ Compiler::TreeStructureReturn Compiler::evalExpr(TreeStructure *thisTS, std::vec
 		}
 		if (parentheses != 0) return { NULL, at_unexpectedToken };
 
-		thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, expr[0].function->size, 2, expr[0].function->getCodeStart(&codePointerLut, &codeTreeStruct) });
+		thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, expr[0].function->size, 2, expr[0].function->getCodeStart(&codePointerLut, &codeTreeStruct), expr[0].funcScopesBack });
 
 		TreeStructure *type = typeIdLut[expr[0].function->returnTypeId];
 
@@ -1030,7 +1057,27 @@ Compiler::TreeStructureReturn Compiler::evalExpr(TreeStructure *thisTS, std::vec
 		for (unsigned int i = 0; i < expr1Result.ts->function.size(); i++) if (expr1Result.ts->functionId[i] == expr[bestOperator].lutId) operatorFunction = expr1Result.ts->function[i];
 		if (operatorFunction == NULL) return { NULL, at_unexpectedToken };
 		if (typeIdLut[operatorFunction->variableType[0]] != expr2Result.ts) return { NULL, at_unexpectedToken };
-		thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, operatorFunction->size, 2, operatorFunction->getCodeStart(&codePointerLut, &codeTreeStruct) });
+
+		unsigned int parentIsScopesBack = 0;
+		TreeStructure *currentParent = thisTS;
+		bool found = false;
+		if (expr1Result.ts->parent == currentParent) found = true;
+		while (currentParent->hasParent && !found)
+		{
+			if (expr1Result.ts->parent != currentParent->parent)
+			{
+				currentParent = currentParent->parent;
+				parentIsScopesBack++;
+			}
+			else
+			{
+				found = true;
+				break;
+			}
+		}
+		if(!found) return { NULL, at_unexpectedToken };
+
+		thisTS->codeRoot->addToCode({ Interpreter::Thread::cmd_newScope, operatorFunction->size, 2, operatorFunction->getCodeStart(&codePointerLut, &codeTreeStruct), parentIsScopesBack });
 		return { typeIdLut[operatorFunction->returnTypeId], at_normal };
 	}
 
@@ -1167,6 +1214,7 @@ bool Compiler::isTokenFunction(unsigned int index, TreeStructure *thisTS, bool i
 {
 	bool found = false;
 	lastTokenLength = 1;
+	scopesBack = 0;
 
 	while (!found)
 	{
@@ -1183,7 +1231,7 @@ bool Compiler::isTokenFunction(unsigned int index, TreeStructure *thisTS, bool i
 		}
 
 		if (!thisTS->hasParent) break;
-		if (!found) thisTS = thisTS->parent;
+		if (!found) { thisTS = thisTS->parent; scopesBack++; }
 	}
 
 	while (found)
@@ -1249,16 +1297,16 @@ char* Compiler::getTokenFullName(unsigned int index, TreeStructure *thisTS)
 	return fullName;
 }
 
-void Compiler::addNativeFunction(const char* name, void(*function)(uintptr_t parentScope, uintptr_t previousScope, unsigned int parameterCount, uintptr_t thisPointer))
+void Compiler::addNativeFunction(const char* name, void(*function)(uintptr_t scope))
 {
 	if (nativeFunctionCount == 0)
 	{
-		nativeFunction = (void(**)(uintptr_t parentScope, uintptr_t previousScope, unsigned int parameterCount, uintptr_t thisPointer))malloc(4);
+		nativeFunction = (void(**)(uintptr_t scope))malloc(4);
 		nativeFunctionName = (char**)malloc(4);
 	}
 	else
 	{
-		nativeFunction = (void(**)(uintptr_t parentScope, uintptr_t previousScope, unsigned int parameterCount, uintptr_t thisPointer))realloc(nativeFunction, nativeFunctionCount * 4 + 4);
+		nativeFunction = (void(**)(uintptr_t scope))realloc(nativeFunction, nativeFunctionCount * 4 + 4);
 		nativeFunctionName = (char**)realloc(nativeFunctionName, nativeFunctionCount * 4 + 4);
 	}
 
