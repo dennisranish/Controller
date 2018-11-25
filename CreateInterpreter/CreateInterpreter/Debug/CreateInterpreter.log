@@ -1,7 +1,0 @@
-﻿  Interpreter.cpp
-c:\users\denni\onedrive\documents\github\controller\createinterpreter\createinterpreter\interpreter.cpp(12): warning C4018: '<': signed/unsigned mismatch
-c:\users\denni\onedrive\documents\github\controller\createinterpreter\createinterpreter\interpreter.cpp(18): warning C4018: '<': signed/unsigned mismatch
-c:\users\denni\onedrive\documents\github\controller\createinterpreter\createinterpreter\interpreter.cpp(43): warning C4018: '<': signed/unsigned mismatch
-c:\users\denni\onedrive\documents\github\controller\createinterpreter\createinterpreter\interpreter.cpp(99): warning C4018: '<': signed/unsigned mismatch
-c:\users\denni\onedrive\documents\github\controller\createinterpreter\createinterpreter\interpreter.cpp(136): warning C4018: '<': signed/unsigned mismatch
-  CreateInterpreter.vcxproj -> C:\Users\denni\OneDrive\Documents\GitHub\Controller\CreateInterpreter\Debug\CreateInterpreter.exe
