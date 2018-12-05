@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+		<style>
+			body { margin: 0px; }
+			.element { border: 1px solid black; margin: 10px; }
+		</style>
+	</head>
+	<body>
+		<script>
+			function run(code, element, message) { eval(code); }
+
+			var element = [];
+			//var webSocket = new WebSocket('ws://' + window.location.hostname  + ':81/');
+			var webSocket = new WebSocket('ws://192.168.1.12:81/');
+			webSocket.onmessage = function(a)
+			{
+				var parameter = a.data.split(',');
+				var type = parseInt(parameter[0]);
+				
+				if(type == 0 || type == 1 || type == 2)
+				{
+					var index = parseInt(parameter[1]);
+					var message = a.data.substring(a.data.indexOf(',', a.data.indexOf(',') + 1) + 1);
+
+					if(type == 0 && element[index] != undefined) run(element[index].update, element[index].div, message);
+					if(type == 1 && element[index] != undefined)
+					{
+						element[index].div.remove();
+						element[index] = undefined;
+					}
+					if(element[index] == undefined)
+					{
+						element[index] = { init: '', div: document.createElement('div'), update: '' };
+						element[index].div.sendData = (data) => webSocket.send('0,' + index + ',' + data);
+						element[index].div.classList = 'element';
+						document.body.append(element[index].div);
+					}
+					if(type == 1) run(element[index].init = message, element[index].div);
+					if(type == 2) element[index].update = message;
+				}
+			}
+		</script>
+	</body>
+</html>

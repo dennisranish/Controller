@@ -1,0 +1,15 @@
+LiveWebPage	KEYWORD1
+add	KEYWORD2
+e	KEYWORD2
+getWebPage 	KEYWORD2
+update	KEYWORD2
+
+Element KEYWORD1
+setInitJs	KEYWORD2
+setUpdateJs	KEYWORD2
+setName	KEYWORD2
+connected	KEYWORD2
+data	KEYWORD2
+disconnected	KEYWORD2
+sendData	KEYWORD2
+broadcastData	KEYWORD2
