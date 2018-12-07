@@ -14,7 +14,8 @@ LiveWebPage::LiveWebPage(int setPort) : webSocket(setPort)
 void LiveWebPage::add(Element *addElement)
 {
 	element.push_back(addElement);
-	addElement->parentPage.push_back(this);
+	if(addElement->parentPage != NULL) addElement->parentPage->remove(addElement);
+	addElement->parentPage = this;
 	webSocket.broadcastTXT("1," + String(element.size() - 1) + "," + String(element[element.size() - 1]->initJs));
 	webSocket.broadcastTXT("2," + String(element.size() - 1) + "," + String(element[element.size() - 1]->updateJs));
 }
@@ -29,7 +30,7 @@ Element* LiveWebPage::e(int index)
 	return (T*)element[index];
 }*/
 
-Element* LiveWebPage::e(String name)
+Element* LiveWebPage::e(const String & name)
 {
 	int index = -1;
 	for(int i = 0; i < element.size(); i++) if(element[i]->name == name) { index = i; break; }
@@ -37,7 +38,7 @@ Element* LiveWebPage::e(String name)
 	return element[index];
 }
 
-/*template <typename T> T* LiveWebPage::e(String name)
+/*template <typename T> T* LiveWebPage::e(const String & name)
 {
 	int index = -1;
 	for(int i = 0; i < element.size(); i++) if(element[i]->name == name) { index = i; break; }
@@ -53,6 +54,11 @@ const char* LiveWebPage::getWebPage()
 void LiveWebPage::update()
 {
 	webSocket.loop();
+}
+
+void LiveWebPage::remove(Element *removeElement)
+{
+	for(int i = 0; i < element.size(); i++) if(element[i] == removeElement) element.erase(element.begin() + i--);
 }
 
 void LiveWebPage::webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length)
@@ -104,7 +110,7 @@ void LiveWebPage::webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, 
 	}
 }
 
-void LiveWebPage::sendData(uint8_t num, Element *elementId, String data)
+void LiveWebPage::sendData(uint8_t num, Element *elementId, const String & data)
 {
 	for(int i = 0; i < element.size(); i++)
 	{
@@ -112,7 +118,7 @@ void LiveWebPage::sendData(uint8_t num, Element *elementId, String data)
 	}
 }
 
-void LiveWebPage::broadcastData(Element *elementId, String data)
+void LiveWebPage::broadcastData(Element *elementId, const String & data)
 {
 	for(int i = 0; i < element.size(); i++)
 	{

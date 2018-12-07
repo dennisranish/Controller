@@ -17,8 +17,8 @@ class LiveWebPage
 		{
 			return (T*)element[index];
 		}
-		Element* e(String name);
-		template <typename T> T* e(String name)
+		Element* e(const String & name);
+		template <typename T> T* e(const String & name)
 		{
 			int index = -1;
 			for(int i = 0; i < element.size(); i++) if(element[i]->name == name) { index = i; break; }
@@ -27,6 +27,7 @@ class LiveWebPage
 		}
 		const char* getWebPage();
 		void update();
+		void remove(Element *removeElement);
 
 		//SingleController &operator[] (int index);
 
@@ -39,8 +40,8 @@ class LiveWebPage
 		std::vector<Element*> element;
 
 		void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
-		void sendData(uint8_t num, Element *elementId, String data);
-		void broadcastData(Element *elementId, String data);
+		void sendData(uint8_t num, Element *elementId, const String & data);
+		void broadcastData(Element *elementId, const String & data);
 
 		friend class Element;
 };

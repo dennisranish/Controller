@@ -1,32 +1,27 @@
 #include "Element.h"
+#include "LiveWebPage.h"
 
-void Element::setInitJs(String newInitJs)
+void Element::setInitJs(const String & newInitJs)
 {
 	initJs = newInitJs;
 }
 
-void Element::setUpdateJs(String newUpdateJs)
+void Element::setUpdateJs(const String & newUpdateJs)
 {
 	updateJs = newUpdateJs;
 }
 
-void Element::setName(String newName)
+void Element::setName(const String & newName)
 {
 	name = newName;
 }
 
-void Element::sendData(uint8_t num, String data)
+void Element::sendData(uint8_t num, const String & data)
 {
-	for(int i = 0; i < parentPage.size(); i++)
-	{
-		parentPage[i]->sendData(num, this, data);
-	}
+	parentPage->sendData(num, this, data);
 }
 
-void Element::broadcastData(String data)
+void Element::broadcastData(const String & data)
 {
-	for(int i = 0; i < parentPage.size(); i++)
-	{
-		parentPage[i]->broadcastData(this, data);
-	}
+	parentPage->broadcastData(this, data);
 }

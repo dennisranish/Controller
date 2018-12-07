@@ -7,17 +7,17 @@
 class Text : public Element
 {
 	public:
-		Text(String name);
-		Text(String name, String style, String id = "", String classList = "");
+		Text(const String & name);
+		Text(const String & name, const String & style, const String & id = "", const String & classList = "");
 
-		void setText(String newText);
+		void setText(const String & newText);
 		String getText();
 
 	private:
 		String text;
 
 		void connected(uint8_t num);
-		void data(uint8_t num, String data);
+		void data(uint8_t num, const String & data);
 		void disconnected(uint8_t num);
 };
 

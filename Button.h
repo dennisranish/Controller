@@ -7,10 +7,10 @@
 class Button : public Element
 {
 	public:
-		Button(String name, String title);
-		Button(String name, String title, String style, String id = "", String classList = "");
+		Button(const String & name, const String & title);
+		Button(const String & name, const String & title, const String & style, const String & id = "", const String & classList = "");
 
-		void setTitle(String newTitle);
+		void setTitle(const String & newTitle);
 		String getTitle();
 		bool getValue();
 		void setChangeCallback(void (*newChangeCallback)(bool));
@@ -25,7 +25,7 @@ class Button : public Element
 		void (*unpressedCallback)();
 
 		void connected(uint8_t num);
-		void data(uint8_t num, String data);
+		void data(uint8_t num, const String & data);
 		void disconnected(uint8_t num);
 };
 

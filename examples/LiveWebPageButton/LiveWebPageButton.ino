@@ -1,19 +1,20 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <LiveWebPage.h>
-#include <LiveElement/Text.h>
-#include <LiveElement/Button.h>
+#include <Text.h>
+#include <Button.h>
 
 const char *ssid = "........";
 const char *password = "........";
 
 ESP8266WebServer server(80);
 LiveWebPage liveWebPage(81);
-Text textField("", "margin: 10px; border: 1px solid black; padding: 10px; font: 25px sans-serif;");
+Text textField("", "margin: 10px; border: 1px solid black; padding: 10px; font: 15px sans-serif;");
 
 void buttonChangeCallbackFunction(bool value)
 {
-	textField.setText(textField.getText() + "\nButton is now: " + (value ? "pressed" : "unpressed"));
+	textField.setText(textField.getText() + "Button is now: " + (value ? "pressed" : "unpressed") + "\n");
+	Serial.println(String("Button is now: ") + (value ? "pressed" : "unpressed"));
 }
 
 void setup(void)

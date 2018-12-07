@@ -1,20 +1,20 @@
 #include <Text.h>
 
-Text::Text(String name)
+Text::Text(const String & name)
 {
 	setInitJs("");
 	setUpdateJs("element.innerText = message");
 	setName(name);
 }
 
-Text::Text(String name, String style, String id, String classList)
+Text::Text(const String & name, const String & style, const String & id, const String & classList)
 {
 	setInitJs("element.id = '" + id + "'; element.style = '" + style + "'; element.classList = '" + classList + "';");
 	setUpdateJs("element.innerText = message");
 	setName(name);
 }
 
-void Text::setText(String newText)
+void Text::setText(const String & newText)
 {
 	text = newText;
 	broadcastData(text);
@@ -30,7 +30,7 @@ void Text::connected(uint8_t num)
 
 }
 
-void Text::data(uint8_t num, String data)
+void Text::data(uint8_t num, const String & data)
 {
 
 }
