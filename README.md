@@ -1,5 +1,5 @@
-# LiveWebPage
-An arduino library for creating create web pages that update automaticaly throught websockets. It alowes for interactive ui that updates the server instantly. This library is desiged to work with esp8266 chipset.
+# Controller
+An arduino library for creating web based controller that updates automaticaly throught websockets. It alowes for interactive ui that updates the server instantly. This library is desiged to work with esp8266 chipset.
 
 ## Installation
 1. Install [Arduino IDE](https://www.arduino.cc/en/Main/Software)

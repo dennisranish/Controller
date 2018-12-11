@@ -2,13 +2,15 @@
 #define Element_h
 
 class Element;
-class LiveWebPage;
+class Controller;
 
 #include <Arduino.h>
 
 class Element
 {
 	public:
+		void display(bool visible);
+		void display(const String & type);
 
 	protected:
 		void setInitJs(const String & newInitJs);
@@ -21,12 +23,13 @@ class Element
 		void broadcastData(const String & data);
 
 	private:
-		LiveWebPage* parentPage;
+		SingleController* parentController;
 		String initJs = "";
 		String updateJs = "";
 		String name = "";
 
-		friend class LiveWebPage;
+		friend class Controller;
+		friend class SingleController;
 };
 
 #endif

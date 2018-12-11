@@ -13,3 +13,8 @@ data	KEYWORD2
 disconnected	KEYWORD2
 sendData	KEYWORD2
 broadcastData	KEYWORD2
+
+Joystick
+HorizantalJoystick
+VirticalJoystick
+SelectList
