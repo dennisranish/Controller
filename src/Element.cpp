@@ -1,5 +1,6 @@
 #include "Element.h"
 #include "Controller.h"
+#include "SingleController.h"
 
 void Element::display(bool visible)
 {

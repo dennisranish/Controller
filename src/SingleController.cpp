@@ -9,10 +9,10 @@ SingleController::SingleController(int index, Controller* controller)
 void SingleController::add(Element *addElement)
 {
 	element.push_back(addElement);
-	if(addElement->parentPage != NULL) addElement->parentPage->remove(addElement);
-	addElement->parentPage = this;
-	webSocket.broadcastTXT("2," + String(thisControllerIndex) + "," + String(element.size() - 1) + "," + String(element[element.size() - 1]->initJs));
-	webSocket.braodcastTXT("3," + String(thisControllerIndex) + "," + String(element.size() - 1) + "," + String(element[element.size() - 1]->updateJs));
+	if(addElement->parentController != NULL) addElement->parentController->remove(addElement);
+	addElement->parentController = this;
+	parentController->webSocket.broadcastTXT("2," + String(thisControllerIndex) + "," + String(element.size() - 1) + "," + String(element[element.size() - 1]->initJs));
+	parentController->webSocket.broadcastTXT("3," + String(thisControllerIndex) + "," + String(element.size() - 1) + "," + String(element[element.size() - 1]->updateJs));
 }
 
 Element* SingleController::e(int index)

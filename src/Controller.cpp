@@ -25,7 +25,7 @@ void Controller::update()
 
 SingleController& Controller::operator[] (int index)
 {
-	return singleController[index];
+	return *singleController[index];
 }
 
 void Controller::webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length)
@@ -50,14 +50,14 @@ void Controller::webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, s
 
 		for(int c = 0; c < singleController.size(); c++)
 		{
-			if(singleController[c].hasOwner == true) webSocket.sendTXT(num, "5," + String(c));
+			if(singleController[c]->hasOwner == true) webSocket.sendTXT(num, "5," + String(c));
 			else webSocket.sendTXT(num, "4," + String(c));
 
 			for(int e = 0; e < singleController[c]->element.size(); e++)
 			{
-				webSocket.sendTXT(num, "2," + String(c) + "," + String(e) + "," + String(singleController[c]->element[i]->initJs));
-				webSocket.sendTXT(num, "3," + String(c) + "," + String(e) + "," + String(singleController[c]->element[i]->updateJs));
-				element[i]->connected(num);
+				webSocket.sendTXT(num, "2," + String(c) + "," + String(e) + "," + String(singleController[c]->element[e]->initJs));
+				webSocket.sendTXT(num, "3," + String(c) + "," + String(e) + "," + String(singleController[c]->element[e]->updateJs));
+				singleController[c]->element[e]->connected(num);
 			}
 		}
 	}
@@ -65,15 +65,15 @@ void Controller::webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, s
 	{
 		for(int c = 0; c < singleController.size(); c++)
 		{
-			if(singleController[c].hasOwner && singleController[c].owner == num)
+			if(singleController[c]->hasOwner && singleController[c]->owner == num)
 			{
-				singleController[c].hasOwner = false;
+				singleController[c]->hasOwner = false;
 				webSocket.broadcastTXT("4," + String(c));
 			}
 
 			for(int e = 0; e < singleController[c]->element.size(); e++)
 			{
-				singleController[c]->element[i]->disconnected(num);
+				singleController[c]->element[e]->disconnected(num);
 			}
 		}
 	}

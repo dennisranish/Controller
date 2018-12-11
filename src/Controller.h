@@ -11,7 +11,7 @@ class Controller;
 class Controller
 {
 	public:
-		Controller(int, count, int setPort);
+		Controller(int count, int setPort);
 		const char* getWebPage();
 		void update();
 		SingleController& operator[] (int index);

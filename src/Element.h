@@ -3,6 +3,7 @@
 
 class Element;
 class Controller;
+class SingleController;
 
 #include <Arduino.h>
 

@@ -5,6 +5,7 @@ class SingleController;
 
 #include <Arduino.h>
 #include <WebSocketsServer.h>
+#include <Controller.h>
 #include <Element.h>
 
 class SingleController
@@ -35,8 +36,8 @@ class SingleController
 		bool hasOwner = false;
 		uint8_t owner = 0;
 
-		sendData(uint8_t num, Element *elementId, const String & data);
-		broadcastData(Element *elementId, const String & data);
+		void sendData(uint8_t num, Element *elementId, const String & data);
+		void broadcastData(Element *elementId, const String & data);
 
 		friend class Element;
 		friend class Controller;
