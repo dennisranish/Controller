@@ -36,8 +36,8 @@
 
 			#controller { height: 80px; margin: 10px; cursor: pointer; z-index: 1001; }
 
-			#select { border-top: 1vh solid black; height: fit-content; border-bottom: 1vh solid black; max-height: 98vh; overflow: auto; z-index: 1001; }
-			#select div { padding: 10px; font: bold 25px sans-serif; cursor: pointer; text-align: center; position: relative; margin-left: 10px; }
+			#select { border-top: 1vh solid black; height: fit-content; border-bottom: 1vh solid black; max-height: 98vh; overflow: auto; z-index: 1001; padding-left: 30px; margin-right: 30px; }
+			#select div { padding: 10px; font: bold 25px sans-serif; cursor: pointer; text-align: center; position: relative; }
 			#select div[status=free] { border: 5px solid grey; background: grey; color: white; }
 			#select div[status=mine] { border: 5px solid darkgreen; background: darkgreen; color: white; }
 			#select div[status=other] { border: 5px solid darkred; background: darkred; color: white; }
@@ -50,7 +50,7 @@
 			#select div[status=mine][selected=true] { background: rgb(0, 37, 0); }
 			#select div[status=other][selected=true] { background: rgb(56, 0, 0); }
 			#select div:after { border-top: 1px solid white; border-bottom: 1px solid white; content: ""; position: absolute; top: -5px; left: -5px; bottom: -5px; right: -5px; }
-			#select div[selected=true]:before { border-left: 8px solid #00a9ff; content: ""; position: absolute; top: 0px; left: -15px; bottom: 0px; right: -5px; }
+			#select div[selected=true]:before { border-right: 8px solid #00a9ff; border-top: 8px solid #00a9ff; content: ""; position: absolute; top: 12px; left: -36px; width: 15px; height: 15px; transform: rotate(45deg); }
 
 			#page { position: absolute; top: 0; left: 0; width: 100vw;height: 100vh; }
 
@@ -63,11 +63,6 @@
 			.controllerPageOverlayButton[status=free]:hover { background: white; color: grey; }
 			.controllerPageOverlayButton[status=mine]:hover { background: white; color: darkgreen; }
 			.controllerPageOverlayButton[status=other]:hover { background: white; color: darkred; }
-			
-
-			.joystick { width: 100px; height: 100px; border: 3px solid black; display: flex; padding: 23px; margin: 10px; }/*position: absolute; bottom: 0; left: 0;*/
-			.joystick div { width: 40px; height: 40px; border: 3px solid black; margin: auto; position: relative; }
-			.joystick div:hover { background: rgb(113, 187, 255); }
 		</style>
 	</head>
 	<body>
@@ -77,17 +72,22 @@
 			<div id='connectingPageButton' onclick='{startWebSocket();}'>Reconnect</div>
 		</div>
 		<div id='navBar'>
-			<svg id='controller' onclick='{document.getElementById("select").style.display = (document.getElementById("select").style.display == "none") ? "block" : "none";}' viewBox="0 80 504.079 345">
-				<path style="fill:#324D5B;" d="M502.519,328.249c-11.815-91.372-61.046-191.015-63.015-195.348c-0.788-1.575-2.363-3.151-3.938-3.938l-7.483-3.151l-2.363-8.665c0-0.788-0.394-1.182-0.788-1.969c-0.394-0.788-5.514-10.634-19.692-16.148c-12.997-5.12-45.686-16.542-65.378-16.542c-6.695,0-12.209,1.182-15.754,3.938c-2.757,1.182-14.572,11.815-25.994,11.815h-94.523c-11.028,0-23.237-10.24-25.994-11.815c-3.938-2.757-9.058-3.938-15.754-3.938c-19.692,0-52.382,11.422-65.378,16.542c-14.178,5.514-19.298,15.36-19.692,16.148c-0.394,0.394-0.394,1.182-0.788,1.969l-2.363,9.058l-5.514,3.151c-1.575,0.788-2.757,1.969-3.545,3.545c-1.969,4.332-51.2,103.975-63.015,195.348c-4.332,34.265,0.394,59.471,14.572,75.618c13.785,15.36,31.902,17.723,39.385,17.723h5.908c10.24,0,24.812-7.877,72.862-59.471c4.726-5.12,8.271-7.877,10.634-10.24c7.089-7.089,21.662-9.452,32.295-9.452h150.449c10.634,0,25.6,2.363,32.295,9.452c2.363,2.363,5.908,5.12,10.634,10.24c48.049,51.594,62.622,59.471,72.862,59.471h5.908c7.089,0,25.6-1.969,39.385-17.723C502.125,387.72,506.851,362.12,502.519,328.249z"/>
-				<path style="fill:#1D323D;" d="M439.504,132.902c-0.788-1.575-2.363-3.151-3.938-3.938l-7.483-3.151l-2.363-8.665c0-0.788-0.394-1.182-0.788-1.969c-0.394-0.788-5.514-10.634-19.692-16.148c-12.997-5.12-45.686-16.542-65.378-16.542c-6.695,0-12.209,1.182-15.754,3.938c-2.757,1.182-14.572,11.815-25.994,11.815h-94.523c-11.028,0-23.237-10.24-25.994-11.815c-3.938-2.757-9.058-3.938-15.754-3.938c-19.692,0-52.382,11.422-65.378,16.542c-14.178,5.514-19.298,15.36-19.692,16.148c-0.394,0.394-0.394,1.182-0.788,1.969l-2.363,9.058l-5.514,3.151c-1.575,0.788-2.757,1.969-3.545,3.545c-0.394,1.182-4.726,9.058-10.24,22.055l36.628-18.511c51.988-24.812,70.498-10.634,72.074-9.452c1.182,1.575,8.271,11.028,25.206,27.569c16.148,16.148,23.631,18.511,26.782,18.511h69.317c3.545,0,11.028-2.757,26.388-18.511c16.542-16.542,23.631-25.6,24.812-27.569c1.969-1.575,21.268-16.148,76.012,11.422c-0.788-0.788,23.237,11.422,39.385,19.692C444.624,143.536,440.291,134.083,439.504,132.902z"/>
-				<path style="fill:#597583;" d="M372.156,216.397c-7.483,0-13.785,6.302-13.785,13.785s6.302,13.785,13.785,13.785s13.785-6.302,13.785-13.785S379.639,216.397,372.156,216.397z M403.664,184.889c-7.483,0-13.785,6.302-13.785,13.785s6.302,13.785,13.785,13.785s13.785-6.302,13.785-13.785S411.147,184.889,403.664,184.889z M340.648,184.889c-7.483,0-13.785,6.302-13.785,13.785s6.302,13.785,13.785,13.785s13.785-6.302,13.785-13.785S348.131,184.889,340.648,184.889zM372.156,153.382c-7.483,0-13.785,6.302-13.785,13.785s6.302,13.785,13.785,13.785s13.785-6.302,13.785-13.785C385.94,159.683,379.639,153.382,372.156,153.382z"/>
-				<path style="fill:#B8C4CB;" d="M252.033,121.874c8.665,0,15.754,7.089,15.754,15.754c0,8.665-7.089,15.754-15.754,15.754c-8.665,0-15.754-7.089-15.754-15.754C236.279,128.963,243.368,121.874,252.033,121.874z"/>
-				<path style="fill:#4F6B79;" d="M222.888,279.412H208.71v14.572c0,3.151-2.363,5.514-5.514,5.514h-12.603c-3.151,0-5.514-2.363-5.514-5.514v-14.572h-14.178c-3.151,0-5.514-2.363-5.514-5.514v-12.603c0-3.151,2.363-5.514,5.514-5.514h14.178v-14.178c0-3.151,2.363-5.514,5.514-5.514h12.603c3.151,0,5.514,2.363,5.514,5.514v14.178h14.178c3.151,0,5.514,2.363,5.514,5.514v12.603C228.402,277.049,226.039,279.412,222.888,279.412z"/>
-				<path style="fill:#2D4552;" d="M299.294,228.212c21.662,0,39.385,17.723,39.385,39.385c0,21.662-17.723,39.385-39.385,39.385c-21.662,0-39.385-17.723-39.385-39.385C259.91,245.936,277.633,228.212,299.294,228.212z"/>
-				<path style="fill:#4F6B79;" d="M299.294,240.028c15.36,0,27.569,12.209,27.569,27.569s-12.209,27.569-27.569,27.569c-15.36,0-27.569-12.209-27.569-27.569C271.725,252.631,283.934,240.028,299.294,240.028z"/>
-				<path style="fill:#2D4552;" d="M126.002,157.32c21.662,0,39.385,17.723,39.385,39.385s-17.723,39.385-39.385,39.385s-39.385-17.723-39.385-39.385S104.34,157.32,126.002,157.32z"/>
-				<path style="fill:#4F6B79;" d="M126.002,169.136c15.36,0,27.569,12.209,27.569,27.569s-12.209,27.569-27.569,27.569s-27.569-12.209-27.569-27.569C98.433,181.739,110.642,169.136,126.002,169.136z"/>
-				<path style="fill:#3F5966;" d="M299.294,251.843c8.665,0,15.754,7.089,15.754,15.754s-7.089,15.754-15.754,15.754s-15.754-7.089-15.754-15.754S290.63,251.843,299.294,251.843z M126.002,180.951c8.665,0,15.754,7.089,15.754,15.754s-7.089,15.754-15.754,15.754s-15.754-7.089-15.754-15.754C110.248,188.04,117.337,180.951,126.002,180.951z"/>
+			<svg id='controller' onclick='{if(controller.length > 1) document.getElementById("select").style.display = (document.getElementById("select").style.display == "none") ? "block" : "none";}' viewBox="0 0 100 68.5">
+				<path fill="#324D5B" d="M11,14.5A4,8.5,19,0,0,29,54Q30.5,52,34,52H66Q69.5,52,71,54A4,8.5,-19,0,0,89,14.5L80,5H20Z"/>
+				<path fill="#1D323D" d="M11,14.5L12.5,11Q13,10,15,9Q15,3,30,1C37,0,37,4,40,4H60C63,4,63,0,70,1Q85,3,85,9Q87,10,87.5,11L89,14.5Q72,5,66,10Q60,18,56,18H44Q40,18,34,10Q28,5,11,14.5"/>
+				<circle cx="50" cy="11.5" r="3" fill="#B8C4CB"/>
+				<circle cx="73.8" cy="17.3" r="2.7" fill="#597583"/>
+				<circle cx="73.8" cy="29.8" r="2.7" fill="#597583"/>
+				<circle cx="67.6" cy="23.55" r="2.7" fill="#597583"/>
+				<circle cx="80.1" cy="23.55" r="2.7" fill="#597583"/>
+				<circle cx="25" cy="23.18" r="7.7" fill="#2D4552"/>
+				<circle cx="25" cy="23.18" r="5.45" fill="#4F6B79"/>
+				<circle cx="25" cy="23.18" r="3.1" fill="#3F5966"/>
+				<circle cx="59.4" cy="37.1" r="7.7" fill="#2D4552"/>
+				<circle cx="59.4" cy="37.1" r="5.45" fill="#4F6B79"/>
+				<circle cx="59.4" cy="37.1" r="3.1" fill="#3F5966"/>
+				<rect x="32.8" y="34.9" rx="1.2" ry="1.2" width="12.5" height="4.8" fill="#4F6B79" />
+				<rect x="36.7" y="31.1" rx="1.2" ry="1.2" width="4.8" height="12.5" fill="#4F6B79" />
 			</svg>
 			<div id='select' style='display: none;'></div>
 			<svg id='fullscreen'onclick='document.documentElement.webkitRequestFullScreen();' viewBox='0 0 1 1'><path d='M0,0H0.35V0.15H0.15V0.35H0Z'></path><path d='M1,0H0.65V0.15H0.85V0.35H1Z'></path><path d='M1,1H0.65V0.85H0.85V0.65H1Z'></path><path d='M0,1H0.35V0.85H0.15V0.65H0Z'></path></svg>
@@ -116,11 +116,9 @@
 				document.getElementById('connectingPageText').style.display = 'block';
 				document.getElementById('connectingPageButton').style.display = 'none';
 
-				webSocket = new WebSocket('ws://' + window.location.hostname  + ':81/');
+				webSocket = new WebSocket('ws://192.168.1.12:81/');
 				webSocket.onmessage = function(a)
 				{
-					console.log(a.data);
-
 					var parameter = a.data.split(',');
 					var type = parseInt(parameter[0]);
 
@@ -130,6 +128,7 @@
 						var oldControllerPage = document.getElementsByClassName('controllerPage');
 						while(oldControllerPage.length > 0) oldControllerPage[0].remove();
 						document.getElementById('select').innerHTML = '';
+						document.getElementById("select").style.display = "none";
 
 						var controllerCount = parseInt(parameter[1]);
 						selectedController = 0;
@@ -204,7 +203,6 @@
 						{
 							elementObject = controller[controllerIndex].element[elementIndex] = { init: '', div: document.createElement('div'), update: '' };
 							elementObject.div.sendData = (data) => webSocket.send('0,' + controllerIndex + ',' + elementIndex + ',' + data);
-							//elementObject.div.classList = '';
 							controller[i].div.append(elementObject.div);
 						}
 						if(type == 2) run(elementObject.init = message, elementObject.div);
@@ -239,14 +237,8 @@
 					document.getElementById('connectingPageText').style.display = 'none';
 					document.getElementById('connectingPageButton').style.display = 'block';
 				}
-
-				webSocket.onerror = function()
-				{
-					//document.getElementById('connectingPage').style.display = 'flex';
-				}
 			}
 			startWebSocket();
-			webSocket.onmessage({data:'0,5'});
 		</script>
 	</body>
 </html>
