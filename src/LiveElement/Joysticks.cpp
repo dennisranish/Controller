@@ -18,7 +18,7 @@ element.append(LabelB);\
 element.append(LabelC);\
 element.append(LabelD);\
 \
-dot.style = 'width: 10px;height: 10px;border: 2px solid black;';\
+dot.style = 'width: 10px;height: 10px;border: 2px solid black;position: relative;';\
 \
 LabelA.style = 'position: fixed; transform: translate(0px, -50px); color: lightgrey;-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;';\
 LabelB.style = 'position: fixed; transform: translate(50px, 0px); color: lightgrey;-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;';\
@@ -36,16 +36,16 @@ function touchEvent(event)\
 	if(this.touchId != -1)\
 	{\
 		var index = -1;\
-		for(var i = 0; i < event.touches.length; i++) if(event.touches[i].identifier == leftTouch.id) index = i;\
+		for(var i = 0; i < event.touches.length; i++) if(event.touches[i].identifier == this.touchId) index = i;\
 		if(index != -1)\
 		{\
-			var x = (this.getBoundingClientRect().x - (this.getBoundingClientRect().width / 2)) - event.touches[index].pageX;\
-			var y = (this.getBoundingClientRect().y - (this.getBoundingClientRect().height / 2)) - event.touches[index].pageY;\
+			var x = event.touches[index].pageX - (this.getBoundingClientRect().x + (this.getBoundingClientRect().width / 2));\
+			var y = event.touches[index].pageY - (this.getBoundingClientRect().y + (this.getBoundingClientRect().height / 2));\
 \
-			if(x > this.getBoundingClientRect().width / 2) x = this.getBoundingClientRect().width / 2;\
-			if(x < this.getBoundingClientRect().width / 2) x = -this.getBoundingClientRect().width / 2;\
-			if(y > this.getBoundingClientRect().height / 2) y = this.getBoundingClientRect().height / 2;\
-			if(y < this.getBoundingClientRect().height / 2) y = -this.getBoundingClientRect().height / 2;\
+			if(x > parseInt(this.style.width, 10) / 2) x = parseInt(this.style.width, 10) / 2) / 2;\
+			if(x < -parseInt(this.style.width, 10) / 2) / 2) x = -parseInt(this.style.width, 10) / 2) / 2;\
+			if(y > parseInt(this.style.height, 10) / 2) / 2) y = parseInt(this.style.height, 10) / 2;\
+			if(y < -parseInt(this.style.height, 10) / 2) y = -parseInt(this.style.height, 10) / 2;\
 \
 			dot.style.top = x + 'px';\
 			dot.style.left = y + 'px';\
@@ -65,13 +65,13 @@ function touchEvent(event)\
 	{\
 		if(event.touches.length == 0) return;\
 \
-		var x = (this.getBoundingClientRect().x - (this.getBoundingClientRect().width / 2)) - event.touches[0].pageX;\
-		var y = (this.getBoundingClientRect().y - (this.getBoundingClientRect().height / 2)) - event.touches[0].pageY;\
+		var x = event.touches[index].pageX - (this.getBoundingClientRect().x + (this.getBoundingClientRect().width / 2));\
+		var y = event.touches[index].pageY - (this.getBoundingClientRect().y + (this.getBoundingClientRect().height / 2));\
 \
-		if(x > this.getBoundingClientRect().width / 2) x = this.getBoundingClientRect().width / 2;\
-		if(x < this.getBoundingClientRect().width / 2) x = -this.getBoundingClientRect().width / 2;\
-		if(y > this.getBoundingClientRect().height / 2) y = this.getBoundingClientRect().height / 2;\
-		if(y < this.getBoundingClientRect().height / 2) y = -this.getBoundingClientRect().height / 2;\
+		if(x > parseInt(this.style.width, 10) / 2) x = parseInt(this.style.width, 10) / 2) / 2;\
+		if(x < -parseInt(this.style.width, 10) / 2) / 2) x = -parseInt(this.style.width, 10) / 2) / 2;\
+		if(y > parseInt(this.style.height, 10) / 2) / 2) y = parseInt(this.style.height, 10) / 2;\
+		if(y < -parseInt(this.style.height, 10) / 2) y = -parseInt(this.style.height, 10) / 2;\
 \
 		dot.style.top = x + 'px';\
 		dot.style.left = y + 'px';\
@@ -121,7 +121,7 @@ element.append(LabelB);\
 element.append(LabelC);\
 element.append(LabelD);\
 \
-dot.style = 'width: 10px;height: 10px;border: 2px solid black;';\
+dot.style = 'width: 10px;height: 10px;border: 2px solid black;position: relative;';\
 \
 LabelA.style = 'position: fixed; transform: translate(0px, -50px); color: lightgrey;-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;';\
 LabelB.style = 'position: fixed; transform: translate(50px, 0px); color: lightgrey;-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;';\
@@ -139,16 +139,16 @@ function touchEvent(event)\
 	if(this.touchId != -1)\
 	{\
 		var index = -1;\
-		for(var i = 0; i < event.touches.length; i++) if(event.touches[i].identifier == leftTouch.id) index = i;\
+		for(var i = 0; i < event.touches.length; i++) if(event.touches[i].identifier == this.touchId) index = i;\
 		if(index != -1)\
 		{\
-			var x = (this.getBoundingClientRect().x - (this.getBoundingClientRect().width / 2)) - event.touches[index].pageX;\
-			var y = (this.getBoundingClientRect().y - (this.getBoundingClientRect().height / 2)) - event.touches[index].pageY;\
+			var x = event.touches[index].pageX - (this.getBoundingClientRect().x + (this.getBoundingClientRect().width / 2));\
+			var y = event.touches[index].pageY - (this.getBoundingClientRect().y + (this.getBoundingClientRect().height / 2));\
 \
-			if(x > this.getBoundingClientRect().width / 2) x = this.getBoundingClientRect().width / 2;\
-			if(x < this.getBoundingClientRect().width / 2) x = -this.getBoundingClientRect().width / 2;\
-			if(y > this.getBoundingClientRect().height / 2) y = this.getBoundingClientRect().height / 2;\
-			if(y < this.getBoundingClientRect().height / 2) y = -this.getBoundingClientRect().height / 2;\
+			if(x > parseInt(this.style.width, 10) / 2) x = parseInt(this.style.width, 10) / 2) / 2;\
+			if(x < -parseInt(this.style.width, 10) / 2) / 2) x = -parseInt(this.style.width, 10) / 2) / 2;\
+			if(y > parseInt(this.style.height, 10) / 2) / 2) y = parseInt(this.style.height, 10) / 2;\
+			if(y < -parseInt(this.style.height, 10) / 2) y = -parseInt(this.style.height, 10) / 2;\
 \
 			dot.style.top = x + 'px';\
 			dot.style.left = y + 'px';\
@@ -168,13 +168,13 @@ function touchEvent(event)\
 	{\
 		if(event.touches.length == 0) return;\
 \
-		var x = (this.getBoundingClientRect().x - (this.getBoundingClientRect().width / 2)) - event.touches[0].pageX;\
-		var y = (this.getBoundingClientRect().y - (this.getBoundingClientRect().height / 2)) - event.touches[0].pageY;\
+		var x = event.touches[index].pageX - (this.getBoundingClientRect().x + (this.getBoundingClientRect().width / 2));\
+		var y = event.touches[index].pageY - (this.getBoundingClientRect().y + (this.getBoundingClientRect().height / 2));\
 \
-		if(x > this.getBoundingClientRect().width / 2) x = this.getBoundingClientRect().width / 2;\
-		if(x < this.getBoundingClientRect().width / 2) x = -this.getBoundingClientRect().width / 2;\
-		if(y > this.getBoundingClientRect().height / 2) y = this.getBoundingClientRect().height / 2;\
-		if(y < this.getBoundingClientRect().height / 2) y = -this.getBoundingClientRect().height / 2;\
+		if(x > parseInt(this.style.width, 10) / 2) x = parseInt(this.style.width, 10) / 2) / 2;\
+		if(x < -parseInt(this.style.width, 10) / 2) / 2) x = -parseInt(this.style.width, 10) / 2) / 2;\
+		if(y > parseInt(this.style.height, 10) / 2) / 2) y = parseInt(this.style.height, 10) / 2;\
+		if(y < -parseInt(this.style.height, 10) / 2) y = -parseInt(this.style.height, 10) / 2;\
 \
 		dot.style.top = x + 'px';\
 		dot.style.left = y + 'px';\
