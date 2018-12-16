@@ -203,7 +203,7 @@
 						{
 							elementObject = controller[controllerIndex].element[elementIndex] = { init: '', div: document.createElement('div'), update: '' };
 							elementObject.div.sendData = (data) => webSocket.send('0,' + controllerIndex + ',' + elementIndex + ',' + data);
-							controller[i].div.append(elementObject.div);
+							controller[controllerIndex].div.append(elementObject.div);
 						}
 						if(type == 2) run(elementObject.init = message, elementObject.div);
 						if(type == 3) elementObject.update = message;
