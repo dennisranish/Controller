@@ -2,14 +2,14 @@
 
 Text::Text(const String & name)
 {
-	setInitJs("");
+	setInitJs("element.style = 'border: 1px solid black; margin: 10px; padding: 10px;';");
 	setUpdateJs("element.innerText = message");
 	setName(name);
 }
 
-Text::Text(const String & name, const String & style, const String & id, const String & classList)
+Text::Text(const String & name, const String & style)
 {
-	setInitJs("element.id = '" + id + "'; element.style = '" + style + "'; element.classList = '" + classList + "';");
+	setInitJs("element.style = '" + style + "border: 1px solid black; margin: 10px; padding: 10px;';");
 	setUpdateJs("element.innerText = message");
 	setName(name);
 }

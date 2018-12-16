@@ -14,6 +14,8 @@ function mouseevent(e)\
 		if(element.state == 'unpressed')\
 		{\
 			element.state = 'pressed';\
+			element.style.border = '1px solid #2ba9ff';\
+			element.style.background = '#2ba9ff';\
 			element.sendData('pressed');\
 		}\
 	}\
@@ -22,6 +24,8 @@ function mouseevent(e)\
 		if(element.state == 'pressed')\
 		{\
 			element.state = 'unpressed';\
+			element.style.border = '1px solid black';\
+			element.style.background = 'none';\
 			element.sendData('unpressed');\
 		}\
 	}\
@@ -52,6 +56,8 @@ function touchevent(e)\
 		if(element.state == 'unpressed')\
 		{\
 			element.state = 'pressed';\
+			element.style.border = '1px solid #2ba9ff';\
+			element.style.background = '#2ba9ff';\
 			element.sendData('pressed');\
 		}\
 	}\
@@ -60,16 +66,29 @@ function touchevent(e)\
 		if(element.state == 'pressed')\
 		{\
 			element.state = 'unpressed';\
+			element.style.border = '1px solid black';\
+			element.style.background = 'none';\
 			element.sendData('unpressed');\
 		}\
 	}\
 }\
-element.style = 'width: fit-content;-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;';");
+element.innerText = '" + title + "';\
+element.style = '\
+width: fit-content;\
+-webkit-touch-callout: none;\
+-webkit-user-select: none;\
+-khtml-user-select: none;\
+-moz-user-select: none;\
+-ms-user-select: none;\
+user-select: none;\
+border: 1px solid black;\
+margin: 10px;\
+padding: 10px;';");
 	setUpdateJs("element.innerText = message");
 	setName(name);
 }
 
-Button::Button(const String & name, const String & title, const String & style, const String & id, const String & classList)
+Button::Button(const String & name, const String & title, const String & style)
 {
 	setInitJs("element.state = 'unpressed';\
 document.addEventListener('mousedown', mouseevent);\
@@ -83,6 +102,8 @@ function mouseevent(e)\
 		if(element.state == 'unpressed')\
 		{\
 			element.state = 'pressed';\
+			element.style.border = '1px solid #2ba9ff';\
+			element.style.background = '#2ba9ff';\
 			element.sendData('pressed');\
 		}\
 	}\
@@ -91,6 +112,8 @@ function mouseevent(e)\
 		if(element.state == 'pressed')\
 		{\
 			element.state = 'unpressed';\
+			element.style.border = '1px solid black';\
+			element.style.background = 'none';\
 			element.sendData('unpressed');\
 		}\
 	}\
@@ -121,6 +144,8 @@ function touchevent(e)\
 		if(element.state == 'unpressed')\
 		{\
 			element.state = 'pressed';\
+			element.style.border = '1px solid #2ba9ff';\
+			element.style.background = '#2ba9ff';\
 			element.sendData('pressed');\
 		}\
 	}\
@@ -129,14 +154,24 @@ function touchevent(e)\
 		if(element.state == 'pressed')\
 		{\
 			element.state = 'unpressed';\
+			element.style.border = '1px solid black';\
+			element.style.background = 'none';\
 			element.sendData('unpressed');\
 		}\
 	}\
 }\
-				element.innerText = '" + title + "';\
-				element.id = '" + id + "';\
-				element.style = '" + style + "width: fit-content;-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;';\
-				element.classList = '" + classList + "';");
+element.innerText = '" + title + "';\
+element.style = '" + style + "\
+width: fit-content;\
+-webkit-touch-callout: none;\
+-webkit-user-select: none;\
+-khtml-user-select: none;\
+-moz-user-select: none;\
+-ms-user-select: none;\
+user-select: none;\
+border: 1px solid black;\
+margin: 10px;\
+padding: 10px;';");
 	setUpdateJs("element.innerText = message");
 	setName(name);
 }
@@ -184,12 +219,14 @@ void Button::data(uint8_t num, const String & data)
 		value = true;
 		if(changeCallback != NULL) changeCallback(true);
 		if(pressedCallback != NULL) pressedCallback();
+		broadcastData("\x001element.style.border = '1px solid #2ba9ff';element.style.background = '#2ba9ff';");
 	}
 	else if(data == "unpressed" && value != false)
 	{
 		value = false;
 		if(changeCallback != NULL) changeCallback(false);
 		if(unpressedCallback != NULL) unpressedCallback();
+		broadcastData("\x001element.style.border = '1px solid black';element.style.background = 'none';");
 	}
 }
 

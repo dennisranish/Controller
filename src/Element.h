@@ -6,7 +6,6 @@ class Controller;
 class SingleController;
 
 #include <Arduino.h>
-
 class Element
 {
 	public:

@@ -8,7 +8,7 @@ class Text : public Element
 {
 	public:
 		Text(const String & name);
-		Text(const String & name, const String & style, const String & id = "", const String & classList = "");
+		Text(const String & name, const String & style);
 
 		void setText(const String & newText);
 		String getText();

@@ -8,7 +8,7 @@ class Button : public Element
 {
 	public:
 		Button(const String & name, const String & title);
-		Button(const String & name, const String & title, const String & style, const String & id = "", const String & classList = "");
+		Button(const String & name, const String & title, const String & style);
 
 		void setTitle(const String & newTitle);
 		String getTitle();

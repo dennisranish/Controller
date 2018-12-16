@@ -7,12 +7,11 @@
 class Joystick : public Element
 {
 	public:
-		Joystick(const String & name, bool snapBack, bool roundShape);
-		Joystick(const String & name, bool snapBack, bool roundShape, const String & style, const String & id = "", const String & classList = "");
+		Joystick(const String & name);
+		Joystick(const String & name, const String & style);
 
-		void setSnapBack(bool snapBack, double newSnapX = 0, double newSnapY = 0);
 		void setLabels(const String & top, const String & right, const String & bottom, const String & left);
-		void setUpdateCallback(void (*updateallback)(double, double));
+		void setUpdateCallback(void (*newUpdateCallback)(double, double));
 
 		double getX();
 		double getY();
@@ -20,7 +19,7 @@ class Joystick : public Element
 	private:
 		double xValue = 0;
 		double yValue = 0;
-		void (*updateallback)(double, double);
+		void (*updateCallback)(double, double);
 
 		void connected(uint8_t num);
 		void data(uint8_t num, const String & data);
