@@ -92,7 +92,7 @@ if(message.charCodeAt(0) == 2)\
 	element.childNodes(3).innerText = label[2];\
 	element.childNodes(4).innerText = label[3];\
 }\
-else\
+else if(!isOwner)\
 {\
 	var position = message.split(',');\
 \
@@ -195,7 +195,7 @@ if(message.charCodeAt(0) == 2)\
 	element.childNodes(3).innerText = label[2];\
 	element.childNodes(4).innerText = label[3];\
 }\
-else\
+else if(!isOwner)\
 {\
 	var position = message.split(',');\
 \
@@ -208,7 +208,7 @@ else\
 
 void setLabels(const String & top, const String & right, const String & bottom, const String & left)
 {
-
+	broadcastData("\x002" + top + "," + right + "," + bottom + "," + left);
 }
 
 void setUpdateCallback(void (*newUpdateCallback)(double, double))
@@ -233,7 +233,6 @@ void connected(uint8_t num)
 
 void data(uint8_t num, const String & data)
 {
-
 }
 
 void disconnected(uint8_t num)
