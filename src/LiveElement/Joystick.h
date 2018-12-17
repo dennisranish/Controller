@@ -10,15 +10,20 @@ class Joystick : public Element
 		Joystick(const String & name);
 		Joystick(const String & name, const String & style);
 
-		void setLabels(const String & top, const String & right, const String & bottom, const String & left);
+		void setTitle(const String & newTitle);
+		void setLabels(const String & newTopLabel, const String & newRightLabel, const String & newBottomLabel, const String & newLeftLabel);
 		void setUpdateCallback(void (*newUpdateCallback)(double, double));
 
-		double getX();
-		double getY();
+		double x();
+		double y();
 
 	private:
+		static String jsInitCode;
+		static String jsUpdateCode;
 		double xValue = 0;
 		double yValue = 0;
+		String title;
+		String topLabel, rightLabel, bottomLabel, leftLabel;
 		void (*updateCallback)(double, double);
 
 		void connected(uint8_t num);
