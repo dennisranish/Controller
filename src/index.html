@@ -101,7 +101,7 @@
 				else { fullscreen.classList = ''; fullscreen.onclick = function(){document.documentElement.webkitRequestFullScreen();}; }
 			}
 
-			function run(code, element, message) { eval(code); }
+			function run(code, element, message, isOwner) { eval(code); }
 
 			var webSocket;
 			var controller = [];
@@ -116,7 +116,7 @@
 				document.getElementById('connectingPageText').style.display = 'block';
 				document.getElementById('connectingPageButton').style.display = 'none';
 
-				webSocket = new WebSocket('ws://192.168.1.12:81/');
+				webSocket = new WebSocket('ws://' + window.location.hostname  + ':81/');
 				webSocket.onmessage = function(a)
 				{
 					var parameter = a.data.split(',');
@@ -193,7 +193,7 @@
 						var elementObject = controller[controllerIndex].element[elementIndex];
 						var message = a.data.substring(a.data.indexOf(',', a.data.indexOf(',', a.data.indexOf(',') + 1) + 1) + 1);
 
-						if(type == 1 && elementObject != undefined) run(elementObject.update, elementObject.div, message);
+						if(type == 1 && elementObject != undefined) run(elementObject.update, elementObject.div, message, elementObject.selectOption.getAttribute('status') == 'mine');
 						if(type == 2 && elementObject != undefined)
 						{
 							elementObject.div.remove();
