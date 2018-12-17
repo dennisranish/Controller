@@ -233,6 +233,10 @@ void connected(uint8_t num)
 
 void data(uint8_t num, const String & data)
 {
+	xValue = data.toFloat();
+	yValue = data.substring(data.indexOf(',') + 1).toFloat();
+	broadcastData(String(xValue) + "," + String(yValue));
+	if(updateCallback != NULL) updateCallback(xValue, yValue);
 }
 
 void disconnected(uint8_t num)
