@@ -8,32 +8,34 @@ void Element::display(bool visible)
 	else broadcastData("\x001element.style.display = 'none';");
 }
 
-void Element::display(const String & type)
+void Element::display(char* type)
 {
-	broadcastData("\x001element.style.display = '" + type + "';");
+	char* stringA = FastString::add({ (char*)"\x001element.style.display = '", type, (char*)"';" });
+	broadcastData(stringA);
+	free(stringA);
 }
 
-void Element::setInitJs(const String & newInitJs)
+void Element::setInitJs(char* newInitJs)
 {
-	initJs = newInitJs;
+	initJs = FastString::add({ newInitJs });
 }
 
-void Element::setUpdateJs(const String & newUpdateJs)
+void Element::setUpdateJs(char* newUpdateJs)
 {
-	updateJs = "if(message.charCodeAt(0) == 1) { eval(message.substring(1);) } else {" + newUpdateJs + "}";
+	updateJs = FastString::add({ (char*)"if(message.charCodeAt(0) == 1) { eval(message.substring(1);) } else {", newUpdateJs, (char*)"}" });
 }
 
-void Element::setName(const String & newName)
+void Element::setName(char* newName)
 {
-	name = newName;
+	name = FastString::add({ newName });
 }
 
-void Element::sendData(uint8_t num, const String & data)
+void Element::sendData(uint8_t num, char* data)
 {
 	parentController->sendData(num, this, data);
 }
 
-void Element::broadcastData(const String & data)
+void Element::broadcastData(char* data)
 {
 	parentController->broadcastData(this, data);
 }

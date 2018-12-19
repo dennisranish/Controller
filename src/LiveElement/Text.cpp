@@ -1,26 +1,28 @@
 #include "Text.h"
 
-Text::Text(const String & name)
+Text::Text(char* name)
 {
 	setInitJs("element.style = 'border: 1px solid black; margin: 10px; padding: 10px;';");
 	setUpdateJs("element.innerText = message");
 	setName(name);
 }
 
-Text::Text(const String & name, const String & style)
+Text::Text(char* name, char* style)
 {
-	setInitJs("element.style = '" + style + "border: 1px solid black; margin: 10px; padding: 10px;';");
+	char* stringA = FastString::add({ (char*)"element.style = '", style, (char*)"border: 1px solid black; margin: 10px; padding: 10px;';" });
+	setInitJs(stringA);
 	setUpdateJs("element.innerText = message");
 	setName(name);
+	free(stringA);
 }
 
-void Text::setText(const String & newText)
+void Text::setText(char* newText)
 {
 	text = newText;
 	broadcastData(text);
 }
 
-String Text::getText()
+const char* Text::getText()
 {
 	return text;
 }
@@ -30,7 +32,7 @@ void Text::connected(uint8_t num)
 
 }
 
-void Text::data(uint8_t num, const String & data)
+void Text::data(uint8_t num, char* data)
 {
 
 }

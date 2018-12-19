@@ -6,27 +6,28 @@ class Controller;
 class SingleController;
 
 #include <Arduino.h>
+
 class Element
 {
 	public:
 		void display(bool visible);
-		void display(const String & type);
+		void display(char* type);
 
 	protected:
-		void setInitJs(const String & newInitJs);
-		void setUpdateJs(const String & newInitJs);
-		void setName(const String & newInitJs);
+		void setInitJs(char* newInitJs);
+		void setUpdateJs(char* newInitJs);
+		void setName(char* newInitJs);
 		virtual void connected(uint8_t num) = 0;
-		virtual void data(uint8_t num, const String & data) = 0;
+		virtual void data(uint8_t num, char* data) = 0;
 		virtual void disconnected(uint8_t num) = 0;
-		void sendData(uint8_t num, const String & data);
-		void broadcastData(const String & data);
+		void sendData(uint8_t num, char* data);
+		void broadcastData(char* data);
 
 	private:
 		SingleController* parentController;
-		String initJs = "";
-		String updateJs = "";
-		String name = "";
+		char* initJs = "";
+		char* updateJs = "";
+		char* name = "";
 
 		friend class Controller;
 		friend class SingleController;

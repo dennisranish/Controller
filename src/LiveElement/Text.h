@@ -3,21 +3,22 @@
 
 #include <Arduino.h>
 #include <Element.h>
+#include <FastString.h>
 
 class Text : public Element
 {
 	public:
-		Text(const String & name);
-		Text(const String & name, const String & style);
+		Text(char* name);
+		Text(char* name, char* style);
 
-		void setText(const String & newText);
-		String getText();
+		void setText(char* newText);
+		const char* getText();
 
 	private:
-		String text;
+		char* text;
 
 		void connected(uint8_t num);
-		void data(uint8_t num, const String & data);
+		void data(uint8_t num, char* data);
 		void disconnected(uint8_t num);
 };
 

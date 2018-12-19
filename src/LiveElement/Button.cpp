@@ -1,188 +1,81 @@
 #include "Button.h"
 
-Button::Button(const String & name, const String & title)
+char* Button::jsInitCode = R"(
+element.style = 'border: 1px solid black;background: white;margin: 10px;padding: 10px;width: fit-content;-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;';
+element.state = 'unpressed';
+element.setPressed = function(isSendData) { this.state = 'pressed'; this.style.border = '1px solid #2ba9ff'; this.style.background = '#2ba9ff'; if(isSendData == true) element.sendData('pressed'); };
+element.setUnpressed = function(isSendData) { this.state = 'unpressed'; this.style.border = '1px solid black'; this.style.background = 'white'; if(isSendData == true) element.sendData('unpressed'); };
+document.addEventListener('mousedown', mouseevent);
+document.addEventListener('mouseup', mouseevent);
+document.addEventListener('mousemove', mouseevent);
+
+function mouseevent(e)
 {
-	setInitJs("element.state = 'unpressed';\
-document.addEventListener('mousedown', mouseevent);\
-document.addEventListener('mouseup', mouseevent);\
-document.addEventListener('mousemove', mouseevent);\
-\
-function mouseevent(e)\
-{\
-	if(e.path[0] == element && e.buttons > 0 && e.button == 0)\
-	{\
-		if(element.state == 'unpressed')\
-		{\
-			element.state = 'pressed';\
-			element.style.border = '1px solid #2ba9ff';\
-			element.style.background = '#2ba9ff';\
-			element.sendData('pressed');\
-		}\
-	}\
-	else\
-	{\
-		if(element.state == 'pressed')\
-		{\
-			element.state = 'unpressed';\
-			element.style.border = '1px solid black';\
-			element.style.background = 'none';\
-			element.sendData('unpressed');\
-		}\
-	}\
-}\
-\
-document.addEventListener('touchstart', touchevent);\
-document.addEventListener('touchmove', touchevent);\
-document.addEventListener('touchend', touchevent);\
-\
-function touchevent(e)\
-{\
-	var foundTouch = false;\
-\
-	for(var i = 0; i < e.touches.length; i++)\
-	{\
-		if(e.touches[i].pageX >= element.getBoundingClientRect().left &&\
-		e.touches[i].pageX <= element.getBoundingClientRect().right &&\
-		e.touches[i].pageY >= element.getBoundingClientRect().top &&\
-		e.touches[i].pageY <= element.getBoundingClientRect().bottom)\
-		{\
-			foundTouch = true;\
-			break;\
-		}\
-	}\
-\
-	if(foundTouch)\
-	{\
-		if(element.state == 'unpressed')\
-		{\
-			element.state = 'pressed';\
-			element.style.border = '1px solid #2ba9ff';\
-			element.style.background = '#2ba9ff';\
-			element.sendData('pressed');\
-		}\
-	}\
-	else\
-	{\
-		if(element.state == 'pressed')\
-		{\
-			element.state = 'unpressed';\
-			element.style.border = '1px solid black';\
-			element.style.background = 'none';\
-			element.sendData('unpressed');\
-		}\
-	}\
-}\
-element.innerText = '" + title + "';\
-element.style = '\
-width: fit-content;\
--webkit-touch-callout: none;\
--webkit-user-select: none;\
--khtml-user-select: none;\
--moz-user-select: none;\
--ms-user-select: none;\
-user-select: none;\
-border: 1px solid black;\
-margin: 10px;\
-padding: 10px;';");
-	setUpdateJs("element.innerText = message");
-	setName(name);
+	if(e.path[0] == element && e.buttons > 0 && e.button == 0) if(this.state == 'unpressed') this.setPressed(true);
+	else if(this.state == 'pressed') this.setUnpressed(true);
 }
 
-Button::Button(const String & name, const String & title, const String & style)
+document.addEventListener('touchstart', touchevent);
+document.addEventListener('touchmove', touchevent);
+document.addEventListener('touchend', touchevent);
+
+function touchevent(e)
 {
-	setInitJs("element.state = 'unpressed';\
-document.addEventListener('mousedown', mouseevent);\
-document.addEventListener('mouseup', mouseevent);\
-document.addEventListener('mousemove', mouseevent);\
-\
-function mouseevent(e)\
-{\
-	if(e.path[0] == element && e.buttons > 0 && e.button == 0)\
-	{\
-		if(element.state == 'unpressed')\
-		{\
-			element.state = 'pressed';\
-			element.style.border = '1px solid #2ba9ff';\
-			element.style.background = '#2ba9ff';\
-			element.sendData('pressed');\
-		}\
-	}\
-	else\
-	{\
-		if(element.state == 'pressed')\
-		{\
-			element.state = 'unpressed';\
-			element.style.border = '1px solid black';\
-			element.style.background = 'none';\
-			element.sendData('unpressed');\
-		}\
-	}\
-}\
-\
-document.addEventListener('touchstart', touchevent);\
-document.addEventListener('touchmove', touchevent);\
-document.addEventListener('touchend', touchevent);\
-\
-function touchevent(e)\
-{\
-	var foundTouch = false;\
-\
-	for(var i = 0; i < e.touches.length; i++)\
-	{\
-		if(e.touches[i].pageX >= element.getBoundingClientRect().left &&\
-		e.touches[i].pageX <= element.getBoundingClientRect().right &&\
-		e.touches[i].pageY >= element.getBoundingClientRect().top &&\
-		e.touches[i].pageY <= element.getBoundingClientRect().bottom)\
-		{\
-			foundTouch = true;\
-			break;\
-		}\
-	}\
-\
-	if(foundTouch)\
-	{\
-		if(element.state == 'unpressed')\
-		{\
-			element.state = 'pressed';\
-			element.style.border = '1px solid #2ba9ff';\
-			element.style.background = '#2ba9ff';\
-			element.sendData('pressed');\
-		}\
-	}\
-	else\
-	{\
-		if(element.state == 'pressed')\
-		{\
-			element.state = 'unpressed';\
-			element.style.border = '1px solid black';\
-			element.style.background = 'none';\
-			element.sendData('unpressed');\
-		}\
-	}\
-}\
-element.innerText = '" + title + "';\
-element.style = '" + style + "\
-width: fit-content;\
--webkit-touch-callout: none;\
--webkit-user-select: none;\
--khtml-user-select: none;\
--moz-user-select: none;\
--ms-user-select: none;\
-user-select: none;\
-border: 1px solid black;\
-margin: 10px;\
-padding: 10px;';");
-	setUpdateJs("element.innerText = message");
+	for(var i = 0; i < e.touches.length; i++)
+	{
+		if(e.touches[i].pageX >= element.getBoundingClientRect().left &&
+		e.touches[i].pageX <= element.getBoundingClientRect().right &&
+		e.touches[i].pageY >= element.getBoundingClientRect().top &&
+		e.touches[i].pageY <= element.getBoundingClientRect().bottom)
+		{
+			if(foundTouch) if(this.state == 'unpressed') this.setPressed(true);
+			else if(this.state == 'pressed') this.setUnpressed(true);
+			break;
+		}
+	}
+}
+)";
+
+char* Button::jsUpdateCode = R"(
+if(message.charCodeAt(0) == 2)
+{
+	element.innerText = message.substring(1);
+}
+else if(!isOwner)
+{
+	if(message == 'pressed') element.setPressed(false);
+	if(message == 'unpressed') element.setUnpressed(false);
+}
+)";
+
+Button::Button(char* name, char* title)
+{
+	char* stringA = FastString::add({ (char*)"element.innerText = '", title, (char*)"';", jsInitCode });
+	setInitJs(stringA);
+	setUpdateJs(jsUpdateCode);
 	setName(name);
+	free(stringA);
 }
 
-void Button::setTitle(const String & newTitle)
+Button::Button(char* name, char* title, char* style)
+{
+	char* stringA = FastString::add({ (char*)"element.innerText = '", title, (char*)"';", (char*)"element.style = '", style, (char*)"';", jsInitCode });
+	setInitJs(stringA);
+	setUpdateJs(jsUpdateCode);
+	setName(name);
+	free(stringA);
+}
+
+void Button::setTitle(char* newTitle)
 {
 	title = newTitle;
-	broadcastData(title);
+
+	char* stringA = FastString::add({ (char*)"\x002", title });
+	broadcastData(stringA);
+	free(stringA);
 }
 
-String Button::getTitle()
+const char* Button::getTitle()
 {
 	return title;
 }
@@ -212,21 +105,21 @@ void Button::connected(uint8_t num)
 
 }
 
-void Button::data(uint8_t num, const String & data)
+void Button::data(uint8_t num, char* data)
 {
-	if(data == "pressed" && value != true)
+	if(strcmp(data, "pressed") == 0 && value != true)
 	{
 		value = true;
 		if(changeCallback != NULL) changeCallback(true);
 		if(pressedCallback != NULL) pressedCallback();
-		broadcastData("\x001element.style.border = '1px solid #2ba9ff';element.style.background = '#2ba9ff';");
+		broadcastData("\x002pressed");
 	}
-	else if(data == "unpressed" && value != false)
+	else if(strcmp(data, "unpressed") == 0 && value != false)
 	{
 		value = false;
 		if(changeCallback != NULL) changeCallback(false);
 		if(unpressedCallback != NULL) unpressedCallback();
-		broadcastData("\x001element.style.border = '1px solid black';element.style.background = 'none';");
+		broadcastData("\x002unpressed");
 	}
 }
 

@@ -3,29 +3,32 @@
 
 #include <Arduino.h>
 #include <Element.h>
+#include <FastString.h>
 
 class Button : public Element
 {
 	public:
-		Button(const String & name, const String & title);
-		Button(const String & name, const String & title, const String & style);
+		Button(char* name, char* title);
+		Button(char* name, char* title, char* style);
 
-		void setTitle(const String & newTitle);
-		String getTitle();
+		void setTitle(char* newTitle);
+		const char* getTitle();
 		bool getValue();
 		void setChangeCallback(void (*newChangeCallback)(bool));
 		void setPressedCallback(void (*newPressedCallback)());
 		void setUnpressedCallback(void (*newUnpressedCallback)());
 
 	private:
-		String title;
+		static char* jsInitCode;
+		static char* jsUpdateCode;
+		char* title;
 		bool value;
 		void (*changeCallback)(bool);
 		void (*pressedCallback)();
 		void (*unpressedCallback)();
 
 		void connected(uint8_t num);
-		void data(uint8_t num, const String & data);
+		void data(uint8_t num, char* data);
 		void disconnected(uint8_t num);
 };
 

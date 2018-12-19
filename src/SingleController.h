@@ -7,6 +7,7 @@ class SingleController;
 #include <WebSocketsServer.h>
 #include <Controller.h>
 #include <Element.h>
+#include <FastString.h>
 
 class SingleController
 {
@@ -18,11 +19,11 @@ class SingleController
 		{
 			return (T*)element[index];
 		}
-		Element* e(const String & name);
-		template <typename T> T* e(const String & name)
+		Element* e(char* name);
+		template <typename T> T* e(char* name)
 		{
 			int index = -1;
-			for(int i = 0; i < element.size(); i++) if(element[i]->name == name) { index = i; break; }
+			for(int i = 0; i < element.size(); i++) if(strcmp(element[i]->name, name) == 0) { index = i; break; }
 			if(index == -1) return NULL;
 			return (T*)element[index];
 		}
@@ -36,8 +37,8 @@ class SingleController
 		bool hasOwner = false;
 		uint8_t owner = 0;
 
-		void sendData(uint8_t num, Element *elementId, const String & data);
-		void broadcastData(Element *elementId, const String & data);
+		void sendData(uint8_t num, Element *elementId, char* data);
+		void broadcastData(Element *elementId, char* data);
 
 		friend class Element;
 		friend class Controller;

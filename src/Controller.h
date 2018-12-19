@@ -12,20 +12,19 @@ class Controller
 {
 	public:
 		Controller(int count, int setPort);
-		Controller(std::initializer_list<String> nameList, int setPort);
+		Controller(std::initializer_list<char*> nameList, int setPort);
 		const char* getWebPage();
 		void update();
 		SingleController& operator[] (int index);
 
 	private:
 		int port;
-		static String webPage0;
-		static String webPage1;
-		String webPage;
-		const char* webPageC_Str;
+		static char* webPage0;
+		static char* webPage1;
+		char* webPage;
 		WebSocketsServer webSocket;
 		std::vector<SingleController*> singleController;
-		std::vector<String> singleControllerName;
+		std::vector<char*> singleControllerName;
 
 		void webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, size_t length);
 

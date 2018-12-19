@@ -1,6 +1,6 @@
 #include "Joystick.h"
 
-String Joystick::jsInitCode = R"(
+char* Joystick::jsInitCode = R"(
 element.style = 'border: 2px solid black; display: flex; justify-content: center; align-items: center; padding: 7px;';
 element.innerWidth = parseInt(element.style.width, 10) / 2;
 element.innerHeight = parseInt(element.style.height, 10) / 2;
@@ -49,7 +49,7 @@ function touchEvent(event)
 	this.sendData(this.x + ',' + this.y);
 })";
 
-String Joystick::jsUpdateCode = R"(
+char* Joystick::jsUpdateCode = R"(
 if(message.charCodeAt(0) == 2)
 {
 	element.title.innerText = message.substring(1);
@@ -78,35 +78,43 @@ else if(!isOwner)
 	element.dot.style.left = element.y + 'px';
 })";
 
-Joystick::Joystick(const String & name)
+Joystick::Joystick(char* name)
 {
-	setInitJs("element.style = 'width: 150px; height: 150px;';" + jsInitCode);
+	char* stringA = FastString::add({ (char*)"element.style = 'width: 150px; height: 150px;';", jsInitCode });
+	setInitJs(stringA);
 	setUpdateJs(jsUpdateCode);
 	setName(name);
+	free(stringA);
 }
 
-Joystick::Joystick(const String & name, const String & style)
+Joystick::Joystick(char* name, char* style)
 {
-	setInitJs("element.style = '" + style + "';" + jsInitCode);
+	char* stringA = FastString::add({ (char*)"element.style = '", style, (char*)"';", jsInitCode });
+	setInitJs(stringA);
 	setUpdateJs(jsUpdateCode);
 	setName(name);
+	free(stringA);
 }
 
-void Joystick::setTitle(const String & newTitle)
+void Joystick::setTitle(char* newTitle)
 {
 	title = newTitle;
 
-	broadcastData(String("\x002") + title);
+	char* stringA = FastString::add({ (char*)"\x002", title });
+	broadcastData(stringA);
+	free(stringA);
 }
 
-void Joystick::setLabels(const String & newTopLabel, const String & newRightLabel, const String & newBottomLabel, const String & newLeftLabel)
+void Joystick::setLabels(char* newTopLabel, char* newRightLabel, char* newBottomLabel, char* newLeftLabel)
 {
 	topLabel = newTopLabel;
 	rightLabel = newRightLabel;
 	bottomLabel = newBottomLabel;
 	leftLabel = newLeftLabel;
 
-	broadcastData(String("\x003") + topLabel + "," + rightLabel + "," + bottomLabel + "," + leftLabel);
+	char* stringA = FastString::add({ (char*)"\x003", topLabel, (char*)",", rightLabel, (char*)",", bottomLabel, (char*)",", leftLabel });
+	broadcastData(stringA);
+	free(stringA);
 }
 
 void Joystick::setUpdateCallback(void (*newUpdateCallback)(double, double))
@@ -126,15 +134,24 @@ double Joystick::y()
 
 void Joystick::connected(uint8_t num)
 {
-	sendData(num, String("\x002") + title);
-	sendData(num, String("\x003") + topLabel + "," + rightLabel + "," + bottomLabel + "," + leftLabel);
+	char* stringA = FastString::add({ (char*)"\x002", title });
+	char* stringB = FastString::add({ (char*)"\x003", topLabel, (char*)",", rightLabel, (char*)",", bottomLabel, (char*)",", leftLabel });
+	sendData(num, stringA);
+	sendData(num, stringB);
+	free(stringA);
+	free(stringB);
 }
 
-void Joystick::data(uint8_t num, const String & data)
+void Joystick::data(uint8_t num, char* data)
 {
-	xValue = data.toFloat();
-	yValue = data.substring(data.indexOf(',') + 1).toFloat();
-	broadcastData(String(xValue) + "," + String(yValue));
+	String dataS = String(data);
+	xValue = dataS.toFloat();
+	yValue = dataS.substring(dataS.indexOf(',') + 1).toFloat();
+
+	char* stringA = FastString::add({ (char*)String(xValue).c_str(), (char*)",", (char*)String(yValue).c_str() });
+	broadcastData(stringA);
+	free(stringA);
+
 	if(updateCallback != NULL) updateCallback(xValue, yValue);
 }
 

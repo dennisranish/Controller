@@ -3,31 +3,32 @@
 
 #include <Arduino.h>
 #include <Element.h>
+#include <FastString.h>
 
 class Joystick : public Element
 {
 	public:
-		Joystick(const String & name);
-		Joystick(const String & name, const String & style);
+		Joystick(char* name);
+		Joystick(char* name, char* style);
 
-		void setTitle(const String & newTitle);
-		void setLabels(const String & newTopLabel, const String & newRightLabel, const String & newBottomLabel, const String & newLeftLabel);
+		void setTitle(char* newTitle);
+		void setLabels(char* newTopLabel, char* newRightLabel, char* newBottomLabel, char* newLeftLabel);
 		void setUpdateCallback(void (*newUpdateCallback)(double, double));
 
 		double x();
 		double y();
 
 	private:
-		static String jsInitCode;
-		static String jsUpdateCode;
+		static char* jsInitCode;
+		static char* jsUpdateCode;
 		double xValue = 0;
 		double yValue = 0;
-		String title;
-		String topLabel, rightLabel, bottomLabel, leftLabel;
+		char* title = "";
+		char *topLabel = "", *rightLabel = "", *bottomLabel = "", *leftLabel = "";
 		void (*updateCallback)(double, double);
 
 		void connected(uint8_t num);
-		void data(uint8_t num, const String & data);
+		void data(uint8_t num, char* data);
 		void disconnected(uint8_t num);
 };
 
