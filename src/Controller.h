@@ -14,6 +14,7 @@ class Controller
 		Controller(int count, int setPort);
 		Controller(std::initializer_list<char*> nameList, int setPort);
 		const char* getWebPage();
+		void init();
 		void update();
 		SingleController& operator[] (int index);
 
@@ -21,6 +22,7 @@ class Controller
 		int port;
 		static char* webPage0;
 		static char* webPage1;
+		static char* webPage2;
 		char* webPage;
 		WebSocketsServer webSocket;
 		std::vector<SingleController*> singleController;

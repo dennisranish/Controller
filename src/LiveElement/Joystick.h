@@ -25,7 +25,7 @@ class Joystick : public Element
 		double yValue = 0;
 		char* title = "";
 		char *topLabel = "", *rightLabel = "", *bottomLabel = "", *leftLabel = "";
-		void (*updateCallback)(double, double);
+		void (*updateCallback)(double, double) = NULL;
 
 		void connected(uint8_t num);
 		void data(uint8_t num, char* data);

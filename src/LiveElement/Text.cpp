@@ -9,11 +9,9 @@ Text::Text(char* name)
 
 Text::Text(char* name, char* style)
 {
-	char* stringA = FastString::add({ (char*)"element.style = '", style, (char*)"border: 1px solid black; margin: 10px; padding: 10px;';" });
-	setInitJs(stringA);
+	setInitJs({ (char*)"element.style = '", style, (char*)"border: 1px solid black; margin: 10px; padding: 10px;';" });
 	setUpdateJs("element.innerText = message");
 	setName(name);
-	free(stringA);
 }
 
 void Text::setText(char* newText)

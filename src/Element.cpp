@@ -17,17 +17,34 @@ void Element::display(char* type)
 
 void Element::setInitJs(char* newInitJs)
 {
-	initJs = FastString::add({ newInitJs });
+	initJs.clear();
+	initJs.push_back(newInitJs);
 }
 
 void Element::setUpdateJs(char* newUpdateJs)
 {
-	updateJs = FastString::add({ (char*)"if(message.charCodeAt(0) == 1) { eval(message.substring(1);) } else {", newUpdateJs, (char*)"}" });
+	updateJs.clear();
+	updateJs.push_back((char*)"if(message.charCodeAt(0) == 1) { eval(message.substring(1)); } else {");
+	updateJs.push_back(newUpdateJs);
+	updateJs.push_back((char*)"}");
 }
 
 void Element::setName(char* newName)
 {
-	name = FastString::add({ newName });
+	name = newName;
+}
+
+void Element::setInitJs(std::vector<char*> newInitJs)
+{
+	initJs.insert(initJs.end(), newInitJs.begin(), newInitJs.end());
+}
+
+void Element::setUpdateJs(std::vector<char*> newUpdateJs)
+{
+	updateJs.clear();
+	updateJs.push_back((char*)"if(message.charCodeAt(0) == 1) { eval(message.substring(1)); } else {");
+	updateJs.insert(updateJs.end(), newUpdateJs.begin(), newUpdateJs.end());
+	updateJs.push_back((char*)"}");
 }
 
 void Element::sendData(uint8_t num, char* data)

@@ -11,8 +11,6 @@ void SingleController::add(Element *addElement)
 	element.push_back(addElement);
 	if(addElement->parentController != NULL) addElement->parentController->remove(addElement);
 	addElement->parentController = this;
-	parentController->webSocket.broadcastTXT(FastString::add({ (char*)"2,", (char*)String(thisControllerIndex).c_str(), (char*)",", (char*)String(element.size() - 1).c_str(), (char*)",", element[element.size() - 1]->initJs }));
-	parentController->webSocket.broadcastTXT(FastString::add({ (char*)"3,", (char*)String(thisControllerIndex).c_str(), (char*)",", (char*)String(element.size() - 1).c_str(), (char*)",", element[element.size() - 1]->updateJs }));
 }
 
 Element* SingleController::e(int index)
@@ -52,7 +50,9 @@ void SingleController::sendData(uint8_t num, Element *elementId, char* data)
 	{
 		if(element[i] == elementId)
 		{
-			parentController->webSocket.sendTXT(num, FastString::add({ (char*)"1,", (char*)String(thisControllerIndex).c_str(), (char*)",", (char*)String(i).c_str(), (char*)",", data }));
+			char* stringA = FastString::add({ (char*)"1,", (char*)String(thisControllerIndex).c_str(), (char*)",", (char*)String(i).c_str(), (char*)",", data });
+			parentController->webSocket.sendTXT(num, stringA);
+			free(stringA);
 		}
 	}
 }
@@ -63,7 +63,9 @@ void SingleController::broadcastData(Element *elementId, char* data)
 	{
 		if(element[i] == elementId)
 		{
-			parentController->webSocket.broadcastTXT(FastString::add({ (char*)"1,", (char*)String(thisControllerIndex).c_str(), (char*)",", (char*)String(i).c_str(), (char*)",", data }));
+			char* stringA = FastString::add({ (char*)"1,", (char*)String(thisControllerIndex).c_str(), (char*)",", (char*)String(i).c_str(), (char*)",", data });
+			parentController->webSocket.broadcastTXT(stringA);
+			free(stringA);
 		}
 	}
 }

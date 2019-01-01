@@ -1,7 +1,7 @@
 #include "Button.h"
 
 char* Button::jsInitCode = R"(
-element.style = 'border: 1px solid black;background: white;margin: 10px;padding: 10px;width: fit-content;-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;';
+element.style.cssText += 'border: 1px solid black;background: white;margin: 10px;padding: 10px;width: fit-content;-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;';
 element.state = 'unpressed';
 element.setPressed = function(isSendData) { this.state = 'pressed'; this.style.border = '1px solid #2ba9ff'; this.style.background = '#2ba9ff'; if(isSendData == true) element.sendData('pressed'); };
 element.setUnpressed = function(isSendData) { this.state = 'unpressed'; this.style.border = '1px solid black'; this.style.background = 'white'; if(isSendData == true) element.sendData('unpressed'); };
@@ -50,20 +50,16 @@ else if(!isOwner)
 
 Button::Button(char* name, char* title)
 {
-	char* stringA = FastString::add({ (char*)"element.innerText = '", title, (char*)"';", jsInitCode });
-	setInitJs(stringA);
+	setInitJs({ (char*)"element.innerText = '", title, (char*)"';", jsInitCode });
 	setUpdateJs(jsUpdateCode);
 	setName(name);
-	free(stringA);
 }
 
 Button::Button(char* name, char* title, char* style)
 {
-	char* stringA = FastString::add({ (char*)"element.innerText = '", title, (char*)"';", (char*)"element.style = '", style, (char*)"';", jsInitCode });
-	setInitJs(stringA);
+	setInitJs({ (char*)"element.innerText = '", title, (char*)"';", (char*)"element.style = '", style, (char*)"';", jsInitCode });
 	setUpdateJs(jsUpdateCode);
 	setName(name);
-	free(stringA);
 }
 
 void Button::setTitle(char* newTitle)

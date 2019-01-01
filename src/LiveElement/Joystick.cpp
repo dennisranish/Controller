@@ -1,22 +1,23 @@
 #include "Joystick.h"
 
 char* Joystick::jsInitCode = R"(
-element.style = 'border: 2px solid black; display: flex; justify-content: center; align-items: center; padding: 7px;';
-element.innerWidth = parseInt(element.style.width, 10) / 2;
-element.innerHeight = parseInt(element.style.height, 10) / 2;
-element.dot = document.createElement('div');element.append(element.dot);
-element.title = document.createElement('div');element.append(element.title);
+element.style.cssText += 'border: 2px solid black; display: flex; justify-content: center; align-items: center; padding: 7px;';
+element.innerWidth = parseInt(element.style.width, 10);
+element.innerHeight = parseInt(element.style.height, 10);
+element.titleLabel = document.createElement('div');element.append(element.titleLabel);
 element.labelA = document.createElement('div');element.append(element.labelA);
 element.labelB = document.createElement('div');element.append(element.labelB);
 element.labelC = document.createElement('div');element.append(element.labelC);
 element.labelD = document.createElement('div');element.append(element.labelD);
-element.title.style = 'color: lightgrey;-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;';
+element.dot = document.createElement('div');element.append(element.dot);
+element.dot.style = 'width: 10px; height: 10px; border: 2px solid black; position: relative;';
+element.titleLabel.style = 'color: lightgrey;-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;position: absolute;top: 0;left: 0;padding-left: 4px;';
 element.labelA.style = 'position: fixed; transform: translate(0px, -' + (element.innerHeight / 2) + 'px); color: lightgrey;-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;';
 element.labelB.style = 'position: fixed; transform: translate(' + (element.innerWidth / 2) + 'px, 0px); color: lightgrey;-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;';
 element.labelC.style = 'position: fixed; transform: translate(0px, ' + (element.innerHeight / 2) + 'px); color: lightgrey;-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;';
 element.labelD.style = 'position: fixed; transform: translate(-' + (element.innerWidth / 2) + 'px, 0px); color: lightgrey;-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;';
 element.touchId = -1;
-if(element.innerWidth > 0 || element.innerHeight > 0) element.valueScale = 100 / Math.max(this.innerWidth / 2, this.innerHeight / 2);
+if(element.innerWidth > 0 || element.innerHeight > 0) element.valueScale = 100 / Math.max(element.innerWidth / 2, element.innerHeight / 2);
 else element.valueScale = 0;
 element.addEventListener('touchstart', touchEvent, false);
 element.addEventListener('touchmove', touchEvent, false);
@@ -24,9 +25,21 @@ element.addEventListener('touchcancel', touchEvent, false);
 element.addEventListener('touchend', touchEvent, false);
 function touchEvent(event)
 {
-	if(this.touchId == -1) this.touchId = 0;
 	var index = -1;
-	for(var i = 0; i < event.touches.length; i++) if(event.touches[i].identifier == this.touchId) index = i;
+	if(this.touchId == -1)
+	{
+		for(var i = 0; i < event.touches.length; i++)
+		{
+			if(event.touches[i].target == this) { index = i; this.touchId = event.touches[i].identifier; break; }
+		}
+	}
+	else
+	{
+		for(var i = 0; i < event.touches.length; i++)
+		{
+			if(event.touches[i].identifier == this.touchId) { index = i; break; }
+		}
+	}
 	if(index != -1)
 	{
 		this.x = event.touches[index].pageX - (this.getBoundingClientRect().x + (this.getBoundingClientRect().width / 2));
@@ -35,8 +48,6 @@ function touchEvent(event)
 		if(this.x < -this.innerWidth / 2) this.x = -this.innerWidth / 2;
 		if(this.y > this.innerHeight / 2) this.y = this.innerHeight / 2;
 		if(this.y < -this.innerHeight / 2) this.y = -this.innerHeight / 2;
-		this.x *= this.valueScale;
-		this.y *= this.valueScale;
 	}
 	else
 	{
@@ -44,15 +55,15 @@ function touchEvent(event)
 		this.x = 0;
 		this.y = 0;
 	}
-	this.dot.style.top = this.x + 'px';
-	this.dot.style.left = this.y + 'px';
-	this.sendData(this.x + ',' + this.y);
+	this.dot.style.top = this.y + 'px';
+	this.dot.style.left = this.x + 'px';
+	this.sendData((this.x * this.valueScale) + ',' + (this.y * this.valueScale));
 })";
 
 char* Joystick::jsUpdateCode = R"(
 if(message.charCodeAt(0) == 2)
 {
-	element.title.innerText = message.substring(1);
+	element.titleLabel.innerText = message.substring(1);
 }
 else if(message.charCodeAt(0) == 3)
 {
@@ -67,33 +78,29 @@ else if(!isOwner)
 {
 	var position = message.split(',');
 
-	element.x = position[0] * element.valueScale;
-	element.y = position[1] * element.valueScale;
+	element.x = position[0] / element.valueScale;
+	element.y = position[1] / element.valueScale;
 	if(element.x > element.innerWidth / 2) element.x = element.innerWidth / 2;
 	if(element.x < -element.innerWidth / 2) element.x = -element.innerWidth / 2;
 	if(element.y > element.innerHeight / 2) element.y = element.innerHeight / 2;
 	if(element.y < -element.innerHeight / 2) element.y = -element.innerHeight / 2;
 
-	element.dot.style.top = element.x + 'px';
-	element.dot.style.left = element.y + 'px';
+	element.dot.style.top = element.y + 'px';
+	element.dot.style.left = element.x + 'px';
 })";
 
 Joystick::Joystick(char* name)
 {
-	char* stringA = FastString::add({ (char*)"element.style = 'width: 150px; height: 150px;';", jsInitCode });
-	setInitJs(stringA);
+	setInitJs({ (char*)"element.style = 'width: 150px; height: 150px;';", jsInitCode });
 	setUpdateJs(jsUpdateCode);
 	setName(name);
-	free(stringA);
 }
 
 Joystick::Joystick(char* name, char* style)
 {
-	char* stringA = FastString::add({ (char*)"element.style = '", style, (char*)"';", jsInitCode });
-	setInitJs(stringA);
+	setInitJs({ (char*)"element.style = '", style, (char*)"';", jsInitCode });
 	setUpdateJs(jsUpdateCode);
 	setName(name);
-	free(stringA);
 }
 
 void Joystick::setTitle(char* newTitle)
@@ -140,6 +147,10 @@ void Joystick::connected(uint8_t num)
 	sendData(num, stringB);
 	free(stringA);
 	free(stringB);
+
+	char* stringC = FastString::add({ (char*)String(xValue).c_str(), (char*)",", (char*)String(yValue).c_str() });
+	sendData(num, stringC);
+	free(stringC);
 }
 
 void Joystick::data(uint8_t num, char* data)

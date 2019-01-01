@@ -110,6 +110,114 @@
 			//var webSocket = new WebSocket('ws://192.168.1.12:81/');
 			//var webSocket = new WebSocket('ws://192.168.1.12:90/');
 
+			function webSocketMessage(a)
+			{
+				var parameter = a.data.split(',');
+				var type = parseInt(parameter[0]);
+
+				if(type == 0)
+				{
+					controller = [];
+					var oldControllerPage = document.getElementsByClassName('controllerPage');
+					while(oldControllerPage.length > 0) oldControllerPage[0].remove();
+					document.getElementById('select').innerHTML = '';
+					document.getElementById("select").style.display = "none";
+
+					var controllerCount = parseInt(parameter[1]);
+					selectedController = 0;
+
+					for(var i = 0; i < controllerCount; i++)
+					{
+						controller[i] = {
+							element: [],
+							div: document.createElement('div'),
+							divOverlay: document.createElement('div'),
+							divOverlayButton: document.createElement('div'),
+							selectOption: document.createElement('div')
+						};
+
+						controller[i].div.classList = 'controllerPage';
+						if(selectedController != i) controller[i].div.style.display = 'none';
+						document.body.append(controller[i].div);
+
+						controller[i].divOverlay.classList = 'controllerPageOverlay';
+						controller[i].divOverlay.style.display = 'flex';
+						controller[i].div.append(controller[i].divOverlay);
+
+						controller[i].divOverlayButton.classList = 'controllerPageOverlayButton';
+						controller[i].divOverlayButton.innerText = 'Take Controller';
+						controller[i].divOverlayButton.setAttribute('status', 'free');
+						const buttonIndex = i;
+						controller[i].divOverlayButton.onclick = function()
+						{
+							webSocket.send('1,' + buttonIndex);
+						};
+						controller[i].divOverlay.append(controller[i].divOverlayButton);
+
+						if(parameter.length > (2 + i)) controller[i].selectOption.innerText = parameter[2 + i];
+						else controller[i].selectOption.innerText = 'Controller ' + (i + 1);
+						if(i == selectedController) controller[i].selectOption.setAttribute('selected', 'true');
+						else controller[i].selectOption.setAttribute('selected', 'false');
+						controller[i].selectOption.setAttribute('status', 'free');
+						controller[i].selectOption.onclick = function()
+						{
+							for(var c = 0; c < controller.length; c++)
+							{
+								if(controller[c].selectOption != this)
+								{
+									controller[c].selectOption.setAttribute('selected', 'false');
+									controller[c].div.style.display = 'none';
+								}
+								else
+								{
+									selectedController = c;
+									controller[c].selectOption.setAttribute('selected', 'true');
+									controller[c].div.style.display = 'block';
+								}
+							}
+						};
+						document.getElementById('select').append(controller[i].selectOption);
+					}
+				}
+				else if(type == 1 || type == 2 || type == 3)
+				{
+					var controllerIndex = parseInt(parameter[1]);
+					var elementIndex = parseInt(parameter[2]);
+					var elementObject = controller[controllerIndex].element[elementIndex];
+					var message = a.data.substring(a.data.indexOf(',', a.data.indexOf(',', a.data.indexOf(',') + 1) + 1) + 1);
+
+					if(type == 1 && elementObject != undefined) run(elementObject.update, elementObject.div, message, controller[controllerIndex].selectOption.getAttribute('status') == 'mine');
+					if(type == 2 && elementObject != undefined)
+					{
+						elementObject.div.remove();
+						elementObject = undefined;
+					}
+					if(elementObject == undefined)
+					{
+						elementObject = controller[controllerIndex].element[elementIndex] = { init: '', div: document.createElement('div'), update: '' };
+						elementObject.div.sendData = (data) => webSocket.send('0,' + controllerIndex + ',' + elementIndex + ',' + data);
+						controller[controllerIndex].div.append(elementObject.div);
+					}
+					if(type == 2) run(elementObject.init = message, elementObject.div);
+					if(type == 3) elementObject.update = message;
+				}
+				else if(type == 4 || type == 5 || type == 6)
+				{
+					var controllerIndex = parseInt(parameter[1]);
+
+					if(type == 4) controller[controllerIndex].selectOption.setAttribute('status', 'free');
+					if(type == 5) controller[controllerIndex].selectOption.setAttribute('status', 'other');
+					if(type == 6) controller[controllerIndex].selectOption.setAttribute('status', 'mine');
+
+					if(type == 4) controller[controllerIndex].divOverlay.firstElementChild.setAttribute('status', 'free');
+					if(type == 5) controller[controllerIndex].divOverlay.firstElementChild.setAttribute('status', 'other');
+					if(type == 6) controller[controllerIndex].divOverlay.firstElementChild.setAttribute('status', 'mine');
+
+					if(type == 4 || type == 5) controller[controllerIndex].divOverlay.style.display = 'flex';
+					if(type == 6) controller[controllerIndex].divOverlay.style.display = 'none';
+				}
+			}
+
 			function startWebSocket()
 			{
 				document.getElementById('connectingPageSvg').style.display = 'block';
@@ -117,113 +225,7 @@
 				document.getElementById('connectingPageButton').style.display = 'none';
 
 				webSocket = new WebSocket('ws://' + window.location.hostname  + ':81/');
-				webSocket.onmessage = function(a)
-				{
-					var parameter = a.data.split(',');
-					var type = parseInt(parameter[0]);
-
-					if(type == 0)
-					{
-						controller = [];
-						var oldControllerPage = document.getElementsByClassName('controllerPage');
-						while(oldControllerPage.length > 0) oldControllerPage[0].remove();
-						document.getElementById('select').innerHTML = '';
-						document.getElementById("select").style.display = "none";
-
-						var controllerCount = parseInt(parameter[1]);
-						selectedController = 0;
-
-						for(var i = 0; i < controllerCount; i++)
-						{
-							controller[i] = {
-								element: [],
-								div: document.createElement('div'),
-								divOverlay: document.createElement('div'),
-								divOverlayButton: document.createElement('div'),
-								selectOption: document.createElement('div')
-							};
-
-							controller[i].div.classList = 'controllerPage';
-							if(selectedController != i) controller[i].div.style.display = 'none';
-							document.body.append(controller[i].div);
-
-							controller[i].divOverlay.classList = 'controllerPageOverlay';
-							controller[i].divOverlay.style.display = 'flex';
-							controller[i].div.append(controller[i].divOverlay);
-
-							controller[i].divOverlayButton.classList = 'controllerPageOverlayButton';
-							controller[i].divOverlayButton.innerText = 'Take Controller';
-							controller[i].divOverlayButton.setAttribute('status', 'free');
-							const buttonIndex = i;
-							controller[i].divOverlayButton.onclick = function()
-							{
-								webSocket.send('1,' + buttonIndex);
-							};
-							controller[i].divOverlay.append(controller[i].divOverlayButton);
-
-							if(parameter.length > (2 + i)) controller[i].selectOption.innerText = parameter[2 + i];
-							else controller[i].selectOption.innerText = 'Controller ' + (i + 1);
-							if(i == selectedController) controller[i].selectOption.setAttribute('selected', 'true');
-							else controller[i].selectOption.setAttribute('selected', 'false');
-							controller[i].selectOption.setAttribute('status', 'free');
-							controller[i].selectOption.onclick = function()
-							{
-								for(var c = 0; c < controller.length; c++)
-								{
-									if(controller[c].selectOption != this)
-									{
-										controller[c].selectOption.setAttribute('selected', 'false');
-										controller[c].div.style.display = 'none';
-									}
-									else
-									{
-										selectedController = c;
-										controller[c].selectOption.setAttribute('selected', 'true');
-										controller[c].div.style.display = 'block';
-									}
-								}
-							};
-							document.getElementById('select').append(controller[i].selectOption);
-						}
-					}
-					else if(type == 1 || type == 2 || type == 3)
-					{
-						var controllerIndex = parseInt(parameter[1]);
-						var elementIndex = parseInt(parameter[2]);
-						var elementObject = controller[controllerIndex].element[elementIndex];
-						var message = a.data.substring(a.data.indexOf(',', a.data.indexOf(',', a.data.indexOf(',') + 1) + 1) + 1);
-
-						if(type == 1 && elementObject != undefined) run(elementObject.update, elementObject.div, message, elementObject.selectOption.getAttribute('status') == 'mine');
-						if(type == 2 && elementObject != undefined)
-						{
-							elementObject.div.remove();
-							elementObject = undefined;
-						}
-						if(elementObject == undefined)
-						{
-							elementObject = controller[controllerIndex].element[elementIndex] = { init: '', div: document.createElement('div'), update: '' };
-							elementObject.div.sendData = (data) => webSocket.send('0,' + controllerIndex + ',' + elementIndex + ',' + data);
-							controller[controllerIndex].div.append(elementObject.div);
-						}
-						if(type == 2) run(elementObject.init = message, elementObject.div);
-						if(type == 3) elementObject.update = message;
-					}
-					else if(type == 4 || type == 5 || type == 6)
-					{
-						var controllerIndex = parseInt(parameter[1]);
-
-						if(type == 4) controller[controllerIndex].selectOption.setAttribute('status', 'free');
-						if(type == 5) controller[controllerIndex].selectOption.setAttribute('status', 'other');
-						if(type == 6) controller[controllerIndex].selectOption.setAttribute('status', 'mine');
-
-						if(type == 4) controller[controllerIndex].divOverlay.firstElementChild.setAttribute('status', 'free');
-						if(type == 5) controller[controllerIndex].divOverlay.firstElementChild.setAttribute('status', 'other');
-						if(type == 6) controller[controllerIndex].divOverlay.firstElementChild.setAttribute('status', 'mine');
-
-						if(type == 4 || type == 5) controller[controllerIndex].divOverlay.style.display = 'flex';
-						if(type == 6) controller[controllerIndex].divOverlay.style.display = 'none';
-					}
-				}
+				webSocket.onmessage = webSocketMessage;
 
 				webSocket.onopen = function()
 				{

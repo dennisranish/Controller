@@ -30,6 +30,9 @@ void setup(void)
 	server.onNotFound([](){server.send(404, "text/plain", "Nothing here");});
 	server.begin();
 
+	controller[0].add(new Joystick("leftJoystick", "width: 150px;height: 150px;position: absolute;left: 0;bottom: 0;"));
+	controller[0].add(new Joystick("rightJoystick", "width: 150px;height: 150px;position: absolute;right: 0;bottom: 0;"));
+
 	controller.init();
 }
 
