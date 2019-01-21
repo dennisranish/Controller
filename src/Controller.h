@@ -13,7 +13,7 @@ class Controller
 	public:
 		Controller(int count, int setPort);
 		Controller(std::initializer_list<char*> nameList, int setPort);
-		const char* getWebPage();
+		char* getWebPage();
 		void init();
 		void update();
 		SingleController& operator[] (int index);

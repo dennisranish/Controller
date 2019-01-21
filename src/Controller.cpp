@@ -35,7 +35,7 @@ Controller::Controller(std::initializer_list<char*> nameList, int setPort) : web
 	}
 }
 
-const char* Controller::getWebPage()
+char* Controller::getWebPage()
 {
 	return webPage;
 }
