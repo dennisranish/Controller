@@ -1,6 +1,7 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <Controller.h>
+#include <LiveElement/Joystick.h>
 
 const char *ssid = "........";
 const char *password = "........";
