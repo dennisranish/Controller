@@ -1,17 +1,17 @@
 #include "Button.h"
 
-char* Button::jsInitCode = R"(
+char* Button::jsCode = R"(
 element.style.cssText += 'border: 1px solid black;background: white;margin: 10px;padding: 10px;width: fit-content;-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;';
 element.state = 'unpressed';
-element.setPressed = function(isSendData) { this.state = 'pressed'; this.style.border = '1px solid #2ba9ff'; this.style.background = '#2ba9ff'; if(isSendData == true) element.sendData('pressed'); };
-element.setUnpressed = function(isSendData) { this.state = 'unpressed'; this.style.border = '1px solid black'; this.style.background = 'white'; if(isSendData == true) element.sendData('unpressed'); };
+element.setPressed = function(sendData) { this.state = 'pressed'; this.style.border = '1px solid #2ba9ff'; this.style.background = '#2ba9ff'; if(sendData) this.send('pressed'); };
+element.setUnpressed = function(sendData) { this.state = 'unpressed'; this.style.border = '1px solid black'; this.style.background = 'white'; if(sendData) this.send('unpressed'); };
 document.addEventListener('mousedown', mouseevent);
 document.addEventListener('mouseup', mouseevent);
 document.addEventListener('mousemove', mouseevent);
 
 function mouseevent(e)
 {
-	if(e.path[0] == element && e.buttons > 0 && e.button == 0) if(this.state == 'unpressed') this.setPressed(true);
+	if(e.path[0] == this && e.buttons > 0 && e.button == 0) if(this.state == 'unpressed') this.setPressed(true);
 	else if(this.state == 'pressed') this.setUnpressed(true);
 }
 
@@ -21,6 +21,8 @@ document.addEventListener('touchend', touchevent);
 
 function touchevent(e)
 {
+	var foundTouch = false;
+
 	for(var i = 0; i < e.touches.length; i++)
 	{
 		if(e.touches[i].pageX >= element.getBoundingClientRect().left &&
@@ -28,47 +30,32 @@ function touchevent(e)
 		e.touches[i].pageY >= element.getBoundingClientRect().top &&
 		e.touches[i].pageY <= element.getBoundingClientRect().bottom)
 		{
-			if(foundTouch) if(this.state == 'unpressed') this.setPressed(true);
-			else if(this.state == 'pressed') this.setUnpressed(true);
+			foundTouch = true;
 			break;
 		}
 	}
+
+	if(foundTouch) if(this.state == 'unpressed') this.setPressed(true);
+	else if(this.state == 'pressed') this.setUnpressed(true);
 }
 )";
-
-char* Button::jsUpdateCode = R"(
-if(message.charCodeAt(0) == 2)
-{
-	element.innerText = message.substring(1);
-}
-else if(!isOwner)
-{
-	if(message == 'pressed') element.setPressed(false);
-	if(message == 'unpressed') element.setUnpressed(false);
-}
-)";
-
-Button::Button(char* name, char* title)
-{
-	setInitJs({ (char*)"element.innerText = '", title, (char*)"';", jsInitCode });
-	setUpdateJs(jsUpdateCode);
-	setName(name);
-}
 
 Button::Button(char* name, char* title, char* style)
 {
-	setInitJs({ (char*)"element.innerText = '", title, (char*)"';", (char*)"element.style = '", style, (char*)"';", jsInitCode });
-	setUpdateJs(jsUpdateCode);
-	setName(name);
+	this->name = name;
+	this->title = title;
+	this->style = style;
 }
 
 void Button::setTitle(char* newTitle)
 {
 	title = newTitle;
 
-	char* stringA = FastString::add({ (char*)"\x002", title });
-	broadcastData(stringA);
-	free(stringA);
+	broadcastSelectSelf();
+	broadcastData("element.innerText = '");
+	broadcastData(title);
+	broadcastData("';");
+	broadcastRun();
 }
 
 const char* Button::getTitle()
@@ -96,30 +83,42 @@ void Button::setUnpressedCallback(void (*newUnpressedCallback)())
 	unpressedCallback = newUnpressedCallback;
 }
 
-void Button::connected(uint8_t num)
+void Button::connectedEvent(uint8_t num)
 {
-
+	selectSelf(num);
+	sendData(num, "element.innerText = '");
+	sendData(num, title);
+	sendData(num, "';");
+	sendData(num, "element.style = '");
+	sendData(num, style);
+	sendData(num, "';");
+	sendData(num, jsCode);
+	sendRun(num);
 }
 
-void Button::data(uint8_t num, char* data)
+void Button::dataEvent(uint8_t num, char* data)
 {
 	if(strcmp(data, "pressed") == 0 && value != true)
 	{
 		value = true;
 		if(changeCallback != NULL) changeCallback(true);
 		if(pressedCallback != NULL) pressedCallback();
-		broadcastData("\x002pressed");
+		broadcastSelectSelf();
+		broadcastData("element.setPressed(false);");
+		broadcastRun();
 	}
 	else if(strcmp(data, "unpressed") == 0 && value != false)
 	{
 		value = false;
 		if(changeCallback != NULL) changeCallback(false);
 		if(unpressedCallback != NULL) unpressedCallback();
-		broadcastData("\x002unpressed");
+		broadcastSelectSelf();
+		broadcastData("element.setUnpressed(false);");
+		broadcastRun();
 	}
 }
 
-void Button::disconnected(uint8_t num)
+void Button::disconnectedEvent(uint8_t num)
 {
 
 }

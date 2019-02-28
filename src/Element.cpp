@@ -1,58 +1,112 @@
 #include "Element.h"
 #include "Controller.h"
-#include "SingleController.h"
 
 void Element::display(bool visible)
 {
-	if(visible) broadcastData("\x001element.style.display = 'block';");
-	else broadcastData("\x001element.style.display = 'none';");
+
 }
 
-void Element::display(char* type)
+void Element::selectSelf(uint8_t num)
 {
-	char* stringA = FastString::add({ (char*)"\x001element.style.display = '", type, (char*)"';" });
-	broadcastData(stringA);
-	free(stringA);
+	if(parent == NULL) return;
+	parent->customSelect(num, this);
 }
 
-void Element::setInitJs(char* newInitJs)
+void Element::broadcastSelectSelf()
 {
-	initJs.clear();
-	initJs.push_back(newInitJs);
+	if(parent == NULL) return;
+	parent->customBroadcastSelect(this);
 }
 
-void Element::setUpdateJs(char* newUpdateJs)
+void Element::select(uint8_t num, Element * element)
 {
-	updateJs.clear();
-	updateJs.push_back((char*)"if(message.charCodeAt(0) == 1) { eval(message.substring(1)); } else {");
-	updateJs.push_back(newUpdateJs);
-	updateJs.push_back((char*)"}");
+	parent->customSelect(num, this);
+	for(int i = 0; i < children.size(); i++) if(children[i] == element)
+	{
+		sprintf(SharedMemory::buffer, "\002%i", i);
+		sendData(num, SharedMemory::buffer);
+		break;
+	}
 }
 
-void Element::setName(char* newName)
+void Element::customSelect(uint8_t num, Element * element)
 {
-	name = newName;
+	select(num, element);
 }
 
-void Element::setInitJs(std::vector<char*> newInitJs)
+void Element::broadcastSelect(Element * element)
 {
-	initJs.insert(initJs.end(), newInitJs.begin(), newInitJs.end());
+	parent->customBroadcastSelect(this);
+	for(int i = 0; i < children.size(); i++) if(children[i] == element)
+	{
+		sprintf(SharedMemory::buffer, "\002%i", i);
+		broadcastData(SharedMemory::buffer);
+		break;
+	}
 }
 
-void Element::setUpdateJs(std::vector<char*> newUpdateJs)
+void Element::customBroadcastSelect(Element * element)
 {
-	updateJs.clear();
-	updateJs.push_back((char*)"if(message.charCodeAt(0) == 1) { eval(message.substring(1)); } else {");
-	updateJs.insert(updateJs.end(), newUpdateJs.begin(), newUpdateJs.end());
-	updateJs.push_back((char*)"}");
+	broadcastSelect(element);
 }
 
-void Element::sendData(uint8_t num, char* data)
+void Element::addChild(Element * element)
 {
-	parentController->sendData(num, this, data);
+	children.push_back(element);
+	if(element->parent != NULL) element->parent->removeChild(element);
+	element->parent = this;
+	element->setController(parentController);
+	element->setSingleController(parentSingleController);
 }
 
-void Element::broadcastData(char* data)
+void Element::removeChild(Element * element)
 {
-	parentController->broadcastData(this, data);
+	for(int i = 0; i < children.size(); i++) if(children[i] == element) children.erase(children.begin() + i--);
+}
+
+void Element::parseData(uint8_t num, char * data)
+{
+	if(data[0] == 1)
+	{
+		int childIndex = strtol(++data, &data, 10);
+		if(children.size() <= childIndex) return;
+		children[childIndex]->parseData(num, data);
+	}
+	else
+	{
+		dataEvent(num, data);
+	}
+	
+}
+
+void Element::sendData(uint8_t num, char * data)
+{
+	parentController->webSocket.sendTXT(num, data);
+}
+
+void Element::broadcastData(char * data)
+{
+	parentController->webSocket.broadcastTXT(data);
+}
+
+void Element::sendRun(uint8_t num)
+{
+	sendData(num, "\003");
+}
+
+void Element::broadcastRun()
+{
+	broadcastData("\003");
+}
+
+void Element::setController(Controller * newParentController)
+{
+	parentController = newParentController;
+	for(int i = 0; i < children.size(); i++) children[i]->setController(newParentController);
+}
+
+void Element::setSingleController(SingleController * newParentSingleController)
+{
+	parentSingleController = newParentSingleController;
+	for(int i = 0; i < children.size(); i++) children[i]->setSingleController(newParentSingleController);
 }

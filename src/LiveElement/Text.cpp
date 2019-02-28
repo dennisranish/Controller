@@ -1,41 +1,45 @@
 #include "Text.h"
 
-Text::Text(char* name)
+Text::Text(char * name, char * style)
 {
-	setInitJs("element.style = 'border: 1px solid black; margin: 10px; padding: 10px;';");
-	setUpdateJs("element.innerText = message");
-	setName(name);
+	this->name = name;
+	this->style = style;
 }
 
-Text::Text(char* name, char* style)
-{
-	setInitJs({ (char*)"element.style = '", style, (char*)"border: 1px solid black; margin: 10px; padding: 10px;';" });
-	setUpdateJs("element.innerText = message");
-	setName(name);
-}
-
-void Text::setText(char* newText)
+void Text::setText(char * newText)
 {
 	text = newText;
+
+	broadcastSelectSelf();
+	broadcastData("element.innerText = '");
 	broadcastData(text);
+	broadcastData("';");
+	broadcastRun();
 }
 
-const char* Text::getText()
+const char * Text::getText()
 {
 	return text;
 }
 
-void Text::connected(uint8_t num)
+void Text::connectedEvent(uint8_t num)
+{
+	selectSelf(num);
+	sendData(num, "element.innerText = '");
+	sendData(num, text);
+	sendData(num, "';");
+	sendData(num, "element.style = '");
+	sendData(num, style);
+	sendData(num, "';");
+	sendRun(num);
+}
+
+void Text::dataEvent(uint8_t num, char * data)
 {
 
 }
 
-void Text::data(uint8_t num, char* data)
-{
-
-}
-
-void Text::disconnected(uint8_t num)
+void Text::disconnectedEvent(uint8_t num)
 {
 
 }

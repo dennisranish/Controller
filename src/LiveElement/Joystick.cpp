@@ -1,6 +1,6 @@
 #include "Joystick.h"
 
-char* Joystick::jsInitCode = R"(
+char * Joystick::jsCode = R"(
 element.style.cssText += 'border: 2px solid black; display: flex; justify-content: center; align-items: center; padding: 7px;';
 element.innerWidth = parseInt(element.style.width, 10);
 element.innerHeight = parseInt(element.style.height, 10);
@@ -57,71 +57,39 @@ function touchEvent(event)
 	}
 	this.dot.style.top = this.y + 'px';
 	this.dot.style.left = this.x + 'px';
-	this.sendData((this.x * this.valueScale) + ',' + (this.y * this.valueScale));
+	this.send((this.x * this.valueScale) + ',' + (this.y * this.valueScale));
 })";
 
-char* Joystick::jsUpdateCode = R"(
-if(message.charCodeAt(0) == 2)
+Joystick::Joystick(char * name, char * style)
 {
-	element.titleLabel.innerText = message.substring(1);
-}
-else if(message.charCodeAt(0) == 3)
-{
-	var label = message.substring(1).split(',');
-
-	element.labelA.innerText = label[0];
-	element.labelB.innerText = label[1];
-	element.labelC.innerText = label[2];
-	element.labelD.innerText = label[3];
-}
-else if(!isOwner)
-{
-	var position = message.split(',');
-
-	element.x = position[0] / element.valueScale;
-	element.y = position[1] / element.valueScale;
-	if(element.x > element.innerWidth / 2) element.x = element.innerWidth / 2;
-	if(element.x < -element.innerWidth / 2) element.x = -element.innerWidth / 2;
-	if(element.y > element.innerHeight / 2) element.y = element.innerHeight / 2;
-	if(element.y < -element.innerHeight / 2) element.y = -element.innerHeight / 2;
-
-	element.dot.style.top = element.y + 'px';
-	element.dot.style.left = element.x + 'px';
-})";
-
-Joystick::Joystick(char* name)
-{
-	setInitJs({ (char*)"element.style = 'width: 150px; height: 150px;';", jsInitCode });
-	setUpdateJs(jsUpdateCode);
-	setName(name);
+	this->name = name;
+	this->style = style;
 }
 
-Joystick::Joystick(char* name, char* style)
-{
-	setInitJs({ (char*)"element.style = '", style, (char*)"';", jsInitCode });
-	setUpdateJs(jsUpdateCode);
-	setName(name);
-}
-
-void Joystick::setTitle(char* newTitle)
+void Joystick::setTitle(char * newTitle)
 {
 	title = newTitle;
 
-	char* stringA = FastString::add({ (char*)"\x002", title });
-	broadcastData(stringA);
-	free(stringA);
+	broadcastSelectSelf();
+	broadcastData("element.titleLabel.innerText = '");
+	broadcastData(title);
+	broadcastData("';");
+	broadcastRun();
 }
 
-void Joystick::setLabels(char* newTopLabel, char* newRightLabel, char* newBottomLabel, char* newLeftLabel)
+void Joystick::setLabels(char * newTopLabel, char * newRightLabel, char * newBottomLabel, char * newLeftLabel)
 {
 	topLabel = newTopLabel;
 	rightLabel = newRightLabel;
 	bottomLabel = newBottomLabel;
 	leftLabel = newLeftLabel;
 
-	char* stringA = FastString::add({ (char*)"\x003", topLabel, (char*)",", rightLabel, (char*)",", bottomLabel, (char*)",", leftLabel });
-	broadcastData(stringA);
-	free(stringA);
+	broadcastSelectSelf();
+	broadcastData("element.labelA.innerText = '");broadcastData(topLabel);broadcastData("';");
+	broadcastData("element.labelB.innerText = '");broadcastData(rightLabel);broadcastData("';");
+	broadcastData("element.labelC.innerText = '");broadcastData(bottomLabel);broadcastData("';");
+	broadcastData("element.labelD.innerText = '");broadcastData(leftLabel);broadcastData("';");
+	broadcastRun();
 }
 
 void Joystick::setUpdateCallback(void (*newUpdateCallback)(double, double))
@@ -139,34 +107,81 @@ double Joystick::y()
 	return yValue;
 }
 
-void Joystick::connected(uint8_t num)
+void Joystick::connectedEvent(uint8_t num)
 {
-	char* stringA = FastString::add({ (char*)"\x002", title });
-	char* stringB = FastString::add({ (char*)"\x003", topLabel, (char*)",", rightLabel, (char*)",", bottomLabel, (char*)",", leftLabel });
-	sendData(num, stringA);
-	sendData(num, stringB);
-	free(stringA);
-	free(stringB);
+	//char* stringA = FastString::add({ (char*)"\x002", title });
+	//char* stringB = FastString::add({ (char*)"\x003", topLabel, (char*)",", rightLabel, (char*)",", bottomLabel, (char*)",", leftLabel });
+	//sendData(num, stringA);
+	//sendData(num, stringB);
+	//free(stringA);
+	//free(stringB);
 
-	char* stringC = FastString::add({ (char*)String(xValue).c_str(), (char*)",", (char*)String(yValue).c_str() });
-	sendData(num, stringC);
-	free(stringC);
+	//char* stringC = FastString::add({ (char*)String(xValue).c_str(), (char*)",", (char*)String(yValue).c_str() });
+	//sendData(num, stringC);
+	//free(stringC);
+
+	String xString = String(xValue);
+	String yString = String(yValue);
+
+	selectSelf(num);
+	sendData(num, "element.style = '");
+	sendData(num, style);
+	sendData(num, "';");
+	sendData(num, jsCode);
+	sendData(num, "element.titleLabel.innerText = '");sendData(num, title);sendData(num, "';");
+	sendData(num, "element.labelA.innerText = '");sendData(num, topLabel);sendData(num, "';");
+	sendData(num, "element.labelB.innerText = '");sendData(num, rightLabel);sendData(num, "';");
+	sendData(num, "element.labelC.innerText = '");sendData(num, bottomLabel);sendData(num, "';");
+	sendData(num, "element.labelD.innerText = '");sendData(num, leftLabel);sendData(num, "';");
+	sendData(num, "element.x=");
+	sendData(num, (char*)xString.c_str());
+	sendData(num, "/element.valueScale;element.y=");
+	sendData(num, (char*)yString.c_str());
+	sendData(num, " /element.valueScale;if(element.x>element.innerWidth/2)element.x=element.innerWidth/2;if(element.x<-element.innerWidth/2)element.x=-element.innerWidth/2;\
+	if(element.y>element.innerHeight/2)element.y=element.innerHeight/2;if(element.y<-element.innerHeight/2)element.y=-element.innerHeight/2;element.dot.style.top=element.y+'px';element.dot.style.left=element.x+'px';");
+	sendRun(num);
 }
 
-void Joystick::data(uint8_t num, char* data)
+void Joystick::dataEvent(uint8_t num, char* data)
 {
 	String dataS = String(data);
 	xValue = dataS.toFloat();
 	yValue = dataS.substring(dataS.indexOf(',') + 1).toFloat();
 
-	char* stringA = FastString::add({ (char*)String(xValue).c_str(), (char*)",", (char*)String(yValue).c_str() });
-	broadcastData(stringA);
-	free(stringA);
+	String xString = String(xValue);
+	String yString = String(yValue);
+
+	broadcastSelectSelf();
+	broadcastData("element.x=");
+	broadcastData((char*)xString.c_str());
+	broadcastData("/element.valueScale;element.y=");
+	broadcastData((char*)yString.c_str());
+	broadcastData(" /element.valueScale;if(element.x>element.innerWidth/2)element.x=element.innerWidth/2;if(element.x<-element.innerWidth/2)element.x=-element.innerWidth/2;\
+	if(element.y>element.innerHeight/2)element.y=element.innerHeight/2;if(element.y<-element.innerHeight/2)element.y=-element.innerHeight/2;element.dot.style.top=element.y+'px';element.dot.style.left=element.x+'px';");
+	broadcastRun();
 
 	if(updateCallback != NULL) updateCallback(xValue, yValue);
 }
 
-void Joystick::disconnected(uint8_t num)
+void Joystick::disconnectedEvent(uint8_t num)
 {
+	if(parentSingleController->getHasOwner() && parentSingleController->getOwner() == num)
+	{
+		xValue = 0;
+		yValue = 0;
 
+		String xString = String(xValue);
+		String yString = String(yValue);
+
+		broadcastSelectSelf();
+		broadcastData("element.x=");
+		broadcastData((char*)xString.c_str());
+		broadcastData("/element.valueScale;element.y=");
+		broadcastData((char*)yString.c_str());
+		broadcastData(" /element.valueScale;if(element.x>element.innerWidth/2)element.x=element.innerWidth/2;if(element.x<-element.innerWidth/2)element.x=-element.innerWidth/2;\
+		if(element.y>element.innerHeight/2)element.y=element.innerHeight/2;if(element.y<-element.innerHeight/2)element.y=-element.innerHeight/2;element.dot.style.top=element.y+'px';element.dot.style.left=element.x+'px';");
+		broadcastRun();
+
+		if(updateCallback != NULL) updateCallback(xValue, yValue);
+	}
 }

@@ -1,71 +1,111 @@
 #include "SingleController.h"
 
-SingleController::SingleController(int index, Controller* controller)
+bool SingleController::getHasOwner()
 {
-	thisControllerIndex = index;
+	return hasOwner;
+}
+
+uint8_t SingleController::getOwner()
+{
+	return owner;
+}
+
+SingleController::SingleController(int index, Controller * controller)
+{
+	controllerIndex = index;
+	parentSingleController = this;
 	parentController = controller;
 }
 
-void SingleController::add(Element *addElement)
+void SingleController::add(Element * element)
 {
-	element.push_back(addElement);
-	if(addElement->parentController != NULL) addElement->parentController->remove(addElement);
-	addElement->parentController = this;
+	addChild(element);
 }
 
-Element* SingleController::e(int index)
+template <typename T> T * SingleController::e(int index)
 {
-	return element[index];
+	return (T*)children[index];
 }
 
-/*template <typename T> T* SingleController::e(int index)
+template <typename T> T * SingleController::e(char * name)
 {
-	return (T*)element[index];
-}*/
-
-Element* SingleController::e(char* name)
-{
-	int index = -1;
-	for(int i = 0; i < element.size(); i++) if(strcmp(element[i]->name, name) == 0) { index = i; break; }
-	if(index == -1) return NULL;
-	return element[index];
+	for(int i = 0; i < children.size(); i++) if(children[i]->name == name) return (T*)children[i];
+	for(int i = 0; i < children.size(); i++) if(strcmp(children[i]->name, name) == 0) return (T*)children[i];
+	return NULL;
 }
 
-/*template <typename T> T* SingleController::e(char* name)
+void SingleController::remove(Element * element)
 {
-	int index = -1;
-	for(int i = 0; i < element.size(); i++) if(strcmp(element[i]->name, name) == 0) { index = i; break; }
-	if(index == -1) return NULL;
-	return (T*)element[index];
-}*/
-
-void SingleController::remove(Element *removeElement)
-{
-	for(int i = 0; i < element.size(); i++) if(element[i] == removeElement) element.erase(element.begin() + i--);
+	removeChild(element);
 }
 
-void SingleController::sendData(uint8_t num, Element *elementId, char* data)
+void SingleController::connectedEvent(uint8_t num)
 {
-	for(int i = 0; i < element.size(); i++)
+	if(hasOwner == true)
 	{
-		if(element[i] == elementId)
-		{
-			char* stringA = FastString::add({ (char*)"1,", (char*)String(thisControllerIndex).c_str(), (char*)",", (char*)String(i).c_str(), (char*)",", data });
-			parentController->webSocket.sendTXT(num, stringA);
-			free(stringA);
-		}
+		sprintf(SharedMemory::buffer, "\001%i", controllerIndex);
+		sendData(num, SharedMemory::buffer);
+
+		sendData(num, "element.setOwner(2);");
+		sendRun(num);
+	}
+
+	for(int i = 0; i < children.size(); i++) callConnectedEvent(children[i], num);
+}
+
+void SingleController::dataEvent(uint8_t num, char * data)
+{
+	sprintf(SharedMemory::buffer, "\001%i", controllerIndex);
+	broadcastData(SharedMemory::buffer);
+
+	broadcastData("element.setOwner(2);");
+	broadcastRun();
+
+	sendData(num, "element.setOwner(1);");
+	sendRun(num);
+
+	hasOwner = true;
+	owner = num;
+}
+
+void SingleController::disconnectedEvent(uint8_t num)
+{
+	if(hasOwner && owner == num)
+	{
+		hasOwner = false;
+
+		sprintf(SharedMemory::buffer, "\001%i", controllerIndex);
+		broadcastData(SharedMemory::buffer);
+
+		broadcastData("element.setOwner(0);");
+		broadcastRun();
+	}
+
+	for(int i = 0; i < children.size(); i++) callDisconnectedEvent(children[i], num);
+}
+
+void SingleController::customSelect(uint8_t num, Element * element)
+{
+	sprintf(SharedMemory::buffer, "\001%i", controllerIndex);
+	sendData(num, SharedMemory::buffer);
+
+	for(int i = 0; i < children.size(); i++) if(children[i] == element)
+	{
+		sprintf(SharedMemory::buffer, "\002%i", i);
+		sendData(num, SharedMemory::buffer);
+		break;
 	}
 }
 
-void SingleController::broadcastData(Element *elementId, char* data)
+void SingleController::customBroadcastSelect(Element * element)
 {
-	for(int i = 0; i < element.size(); i++)
+	sprintf(SharedMemory::buffer, "\001%i", controllerIndex);
+	broadcastData(SharedMemory::buffer);
+
+	for(int i = 0; i < children.size(); i++) if(children[i] == element)
 	{
-		if(element[i] == elementId)
-		{
-			char* stringA = FastString::add({ (char*)"1,", (char*)String(thisControllerIndex).c_str(), (char*)",", (char*)String(i).c_str(), (char*)",", data });
-			parentController->webSocket.broadcastTXT(stringA);
-			free(stringA);
-		}
+		sprintf(SharedMemory::buffer, "\002%i", i);
+		broadcastData(SharedMemory::buffer);
+		break;
 	}
 }

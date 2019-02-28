@@ -29,8 +29,6 @@ void setup(void)
 	server.on("/", [](){server.send_P(200, "text/html", controller.getWebPage());});
 	server.onNotFound([](){server.send(404, "text/plain", "Nothing here");});
 	server.begin();
-
-	controller.init();
 }
 
 void loop(void)

@@ -7,40 +7,33 @@ class SingleController;
 #include <WebSocketsServer.h>
 #include <Controller.h>
 #include <Element.h>
-#include <FastString.h>
+#include <SharedMemory.h>
 
-class SingleController
+class SingleController : public Element
 {
 	public:
-		SingleController(int index, Controller* controller);
-		void add(Element *addElement);
-		Element* e(int index);
-		template <typename T> T* e(int index)
-		{
-			return (T*)element[index];
-		}
-		Element* e(char* name);
-		template <typename T> T* e(char* name)
-		{
-			int index = -1;
-			for(int i = 0; i < element.size(); i++) if(strcmp(element[i]->name, name) == 0) { index = i; break; }
-			if(index == -1) return NULL;
-			return (T*)element[index];
-		}
-		void remove(Element *removeElement);
+		bool getHasOwner();
+		uint8_t getOwner();
+
+		SingleController(int index, Controller * controller);
+		void add(Element * element);
+		template <typename T = Element> T * e(int index);
+		template <typename T = Element> T * e(char * name);
+		void remove(Element * element);
 
 	private:
-		int thisControllerIndex;
-		Controller* parentController;
-		std::vector<Element*> element;
+		int controllerIndex;
 
 		bool hasOwner = false;
 		uint8_t owner = 0;
 
-		void sendData(uint8_t num, Element *elementId, char* data);
-		void broadcastData(Element *elementId, char* data);
+		void connectedEvent(uint8_t num);
+		void dataEvent(uint8_t num, char * data);
+		void disconnectedEvent(uint8_t num);
 
-		friend class Element;
+		void customSelect(uint8_t num, Element * element);
+		void customBroadcastSelect(Element * element);
+
 		friend class Controller;
 };
 
