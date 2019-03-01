@@ -1,18 +1,19 @@
 #include "Button.h"
 
 char* Button::jsCode = R"(
-element.style.cssText += 'border: 1px solid black;background: white;margin: 10px;padding: 10px;width: fit-content;-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;';
+element.style.cssText += 'border: 1px solid black;background: white;margin: 10px;padding: 10px;width: fit-content;font-style: monospace;-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;';
 element.state = 'unpressed';
-element.setPressed = function(sendData) { this.state = 'pressed'; this.style.border = '1px solid #2ba9ff'; this.style.background = '#2ba9ff'; if(sendData) this.send('pressed'); };
-element.setUnpressed = function(sendData) { this.state = 'unpressed'; this.style.border = '1px solid black'; this.style.background = 'white'; if(sendData) this.send('unpressed'); };
+element.setPressed = function(sendData) { this.state = 'pressed'; this.style.border = '1px solid #2ba9ff'; this.style.background = '#2ba9ff'; this.style.color = '#ffffff'; if(sendData) this.send('pressed'); };
+element.setUnpressed = function(sendData) { this.state = 'unpressed'; this.style.border = '1px solid black'; this.style.background = 'white'; this.style.color = '#000000'; if(sendData) this.send('unpressed'); };
 document.addEventListener('mousedown', mouseevent);
 document.addEventListener('mouseup', mouseevent);
 document.addEventListener('mousemove', mouseevent);
+let savedElement = element;
 
 function mouseevent(e)
 {
-	if(e.path[0] == this && e.buttons > 0 && e.button == 0) if(this.state == 'unpressed') this.setPressed(true);
-	else if(this.state == 'pressed') this.setUnpressed(true);
+	if(e.path[0] == savedElement && e.buttons > 0 && e.button == 0) { if(this.state == 'unpressed') this.setPressed(true); }
+	else { if(this.state == 'pressed') this.setUnpressed(true); }
 }
 
 document.addEventListener('touchstart', touchevent);
@@ -25,18 +26,18 @@ function touchevent(e)
 
 	for(var i = 0; i < e.touches.length; i++)
 	{
-		if(e.touches[i].pageX >= element.getBoundingClientRect().left &&
-		e.touches[i].pageX <= element.getBoundingClientRect().right &&
-		e.touches[i].pageY >= element.getBoundingClientRect().top &&
-		e.touches[i].pageY <= element.getBoundingClientRect().bottom)
+		if(e.touches[i].pageX >= savedElement.getBoundingClientRect().left &&
+		e.touches[i].pageX <= savedElement.getBoundingClientRect().right &&
+		e.touches[i].pageY >= savedElement.getBoundingClientRect().top &&
+		e.touches[i].pageY <= savedElement.getBoundingClientRect().bottom)
 		{
 			foundTouch = true;
 			break;
 		}
 	}
 
-	if(foundTouch) if(this.state == 'unpressed') this.setPressed(true);
-	else if(this.state == 'pressed') this.setUnpressed(true);
+	if(foundTouch) { if(savedElement.state == 'unpressed') savedElement.setPressed(true); }
+	else { if(savedElement.state == 'pressed') savedElement.setUnpressed(true); }
 }
 )";
 

@@ -74,6 +74,7 @@ void Element::parseData(uint8_t num, char * data)
 	}
 	else
 	{
+		data++;
 		dataEvent(num, data);
 	}
 	

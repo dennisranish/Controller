@@ -9,7 +9,7 @@ element.container.append(newElement);\
 newElement.childrenList=[];\
 newElement.container=newElement;\
 newElement.parent=element;\
-newElement.send=function(message=''){webSocket.send(this.parent.getSelector(this)+message);};\
+newElement.send=function(message=''){webSocket.send(this.parent.getSelector(this)+'\002'+message);};\
 newElement.getSelector=function(selectElememt){return this.parent.getSelector(this)+'\001'+this.childrenList.findIndex(e=>e==selectElememt);};\
 }element=element.childrenList[index];code='';}\
 else if(message.data.charCodeAt(0) == 3){eval(code);code='';}\

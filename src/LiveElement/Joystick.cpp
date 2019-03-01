@@ -10,7 +10,9 @@ element.labelB = document.createElement('div');element.append(element.labelB);
 element.labelC = document.createElement('div');element.append(element.labelC);
 element.labelD = document.createElement('div');element.append(element.labelD);
 element.dot = document.createElement('div');element.append(element.dot);
-element.dot.style = 'width: 10px; height: 10px; border: 2px solid black; position: relative;';
+element.dot.style = 'width:10px;height:10px;border:2px solid black;position:relative;z-index:101;transform: translate(7px)';
+element.dotEcho = document.createElement('div');element.append(element.dotEcho);
+element.dotEcho.style = 'width:10px;height:10px;border:2px solid steelBlue;position:relative;z-index:100;transform: translate(-7px)';
 element.titleLabel.style = 'color: lightgrey;-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;position: absolute;top: 0;left: 0;padding-left: 4px;';
 element.labelA.style = 'position: fixed; transform: translate(0px, -' + (element.innerHeight / 2) + 'px); color: lightgrey;-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;';
 element.labelB.style = 'position: fixed; transform: translate(' + (element.innerWidth / 2) + 'px, 0px); color: lightgrey;-webkit-touch-callout: none;-webkit-user-select: none;-khtml-user-select: none;-moz-user-select: none;-ms-user-select: none;user-select: none;';
@@ -19,6 +21,8 @@ element.labelD.style = 'position: fixed; transform: translate(-' + (element.inne
 element.touchId = -1;
 if(element.innerWidth > 0 || element.innerHeight > 0) element.valueScale = 100 / Math.max(element.innerWidth / 2, element.innerHeight / 2);
 else element.valueScale = 0;
+element.x=0;element.y=0;element.recivedX=0;element.recivedY=0;
+let savedElement = element;
 element.addEventListener('touchstart', touchEvent, false);
 element.addEventListener('touchmove', touchEvent, false);
 element.addEventListener('touchcancel', touchEvent, false);
@@ -55,9 +59,28 @@ function touchEvent(event)
 		this.x = 0;
 		this.y = 0;
 	}
+
 	this.dot.style.top = this.y + 'px';
 	this.dot.style.left = this.x + 'px';
-	this.send((this.x * this.valueScale) + ',' + (this.y * this.valueScale));
+
+	if(this.recived)
+	{
+		this.recived = false;
+		this.send((this.x * this.valueScale) + ',' + (this.y * this.valueScale));
+	}
+
+	clearInterval(this.interval);
+	
+	this.interval = setInterval(function()
+	{
+		if(savedElement.recivedX != savedElement.x || savedElement.recivedY != savedElement.y)
+		{
+			savedElement.recived = false;
+			savedElement.lastSent = new Date();
+			savedElement.send((savedElement.x * savedElement.valueScale) + ',' + (savedElement.y * savedElement.valueScale));
+		}
+		else clearInterval(savedElement.interval);
+	}, 250);
 })";
 
 Joystick::Joystick(char * name, char * style)
@@ -109,17 +132,6 @@ double Joystick::y()
 
 void Joystick::connectedEvent(uint8_t num)
 {
-	//char* stringA = FastString::add({ (char*)"\x002", title });
-	//char* stringB = FastString::add({ (char*)"\x003", topLabel, (char*)",", rightLabel, (char*)",", bottomLabel, (char*)",", leftLabel });
-	//sendData(num, stringA);
-	//sendData(num, stringB);
-	//free(stringA);
-	//free(stringB);
-
-	//char* stringC = FastString::add({ (char*)String(xValue).c_str(), (char*)",", (char*)String(yValue).c_str() });
-	//sendData(num, stringC);
-	//free(stringC);
-
 	String xString = String(xValue);
 	String yString = String(yValue);
 
@@ -133,12 +145,18 @@ void Joystick::connectedEvent(uint8_t num)
 	sendData(num, "element.labelB.innerText = '");sendData(num, rightLabel);sendData(num, "';");
 	sendData(num, "element.labelC.innerText = '");sendData(num, bottomLabel);sendData(num, "';");
 	sendData(num, "element.labelD.innerText = '");sendData(num, leftLabel);sendData(num, "';");
-	sendData(num, "element.x=");
+	sendData(num, "element.recivedX=");
 	sendData(num, (char*)xString.c_str());
-	sendData(num, "/element.valueScale;element.y=");
+	sendData(num, "/element.valueScale;element.recivedY=");
 	sendData(num, (char*)yString.c_str());
-	sendData(num, " /element.valueScale;if(element.x>element.innerWidth/2)element.x=element.innerWidth/2;if(element.x<-element.innerWidth/2)element.x=-element.innerWidth/2;\
-	if(element.y>element.innerHeight/2)element.y=element.innerHeight/2;if(element.y<-element.innerHeight/2)element.y=-element.innerHeight/2;element.dot.style.top=element.y+'px';element.dot.style.left=element.x+'px';");
+	sendData(num, " /element.valueScale;\
+	if(element.recivedX>element.innerWidth/2)element.recivedX=element.innerWidth/2;\
+	if(element.recivedX<-element.innerWidth/2)element.recivedX=-element.innerWidth/2;\
+	if(element.recivedY>element.innerHeight/2)element.recivedY=element.innerHeight/2;\
+	if(element.recivedY<-element.innerHeight/2)element.recivedY=-element.innerHeight/2;\
+	if(!pageList[selectedPage].isOwner){element.dot.style.left=element.recivedX+'px';element.dot.style.top=element.recivedY+'px';}\
+	element.dotEcho.style.left=element.recivedX+'px';element.dotEcho.style.top=element.recivedY+'px';\
+	element.recived=true;");
 	sendRun(num);
 }
 
@@ -152,12 +170,18 @@ void Joystick::dataEvent(uint8_t num, char* data)
 	String yString = String(yValue);
 
 	broadcastSelectSelf();
-	broadcastData("element.x=");
+	broadcastData("element.recivedX=");
 	broadcastData((char*)xString.c_str());
-	broadcastData("/element.valueScale;element.y=");
+	broadcastData("/element.valueScale;element.recivedY=");
 	broadcastData((char*)yString.c_str());
-	broadcastData(" /element.valueScale;if(element.x>element.innerWidth/2)element.x=element.innerWidth/2;if(element.x<-element.innerWidth/2)element.x=-element.innerWidth/2;\
-	if(element.y>element.innerHeight/2)element.y=element.innerHeight/2;if(element.y<-element.innerHeight/2)element.y=-element.innerHeight/2;element.dot.style.top=element.y+'px';element.dot.style.left=element.x+'px';");
+	broadcastData(" /element.valueScale;\
+	if(element.recivedX>element.innerWidth/2)element.recivedX=element.innerWidth/2;\
+	if(element.recivedX<-element.innerWidth/2)element.recivedX=-element.innerWidth/2;\
+	if(element.recivedY>element.innerHeight/2)element.recivedY=element.innerHeight/2;\
+	if(element.recivedY<-element.innerHeight/2)element.recivedY=-element.innerHeight/2;\
+	if(!pageList[selectedPage].isOwner){element.dot.style.left=element.recivedX+'px';element.dot.style.top=element.recivedY+'px';}\
+	element.dotEcho.style.left=element.recivedX+'px';element.dotEcho.style.top=element.recivedY+'px';\
+	element.recived=true;");
 	broadcastRun();
 
 	if(updateCallback != NULL) updateCallback(xValue, yValue);
@@ -174,12 +198,18 @@ void Joystick::disconnectedEvent(uint8_t num)
 		String yString = String(yValue);
 
 		broadcastSelectSelf();
-		broadcastData("element.x=");
+		broadcastData("element.recivedX=");
 		broadcastData((char*)xString.c_str());
-		broadcastData("/element.valueScale;element.y=");
+		broadcastData("/element.valueScale;element.recivedY=");
 		broadcastData((char*)yString.c_str());
-		broadcastData(" /element.valueScale;if(element.x>element.innerWidth/2)element.x=element.innerWidth/2;if(element.x<-element.innerWidth/2)element.x=-element.innerWidth/2;\
-		if(element.y>element.innerHeight/2)element.y=element.innerHeight/2;if(element.y<-element.innerHeight/2)element.y=-element.innerHeight/2;element.dot.style.top=element.y+'px';element.dot.style.left=element.x+'px';");
+		broadcastData(" /element.valueScale;\
+		if(element.recivedX>element.innerWidth/2)element.recivedX=element.innerWidth/2;\
+		if(element.recivedX<-element.innerWidth/2)element.recivedX=-element.innerWidth/2;\
+		if(element.recivedY>element.innerHeight/2)element.recivedY=element.innerHeight/2;\
+		if(element.recivedY<-element.innerHeight/2)element.recivedY=-element.innerHeight/2;\
+		if(!pageList[selectedPage].isOwner){element.dot.style.left=element.recivedX+'px';element.dot.style.top=element.recivedY+'px';}\
+		element.dotEcho.style.left=element.recivedX+'px';element.dotEcho.style.top=element.recivedY+'px';\
+		element.recived=true;");
 		broadcastRun();
 
 		if(updateCallback != NULL) updateCallback(xValue, yValue);
