@@ -87,7 +87,7 @@ Joystick::Joystick(char * name, char * style)
 {
 	this->name = name;
 	this->style = style;
-	defualDisplay = "flex";
+	defaultDisplay = "flex";
 }
 
 void Joystick::setTitle(char * newTitle)

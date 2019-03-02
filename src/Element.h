@@ -20,7 +20,7 @@ class Element
 
 	protected:
 		std::vector<char*> js;
-		char* defualDisplay = "block";
+		char* defaultDisplay = "block";
 		std::vector<Element*> children;
 		bool isVisible = true;
 

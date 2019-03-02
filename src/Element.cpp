@@ -7,7 +7,7 @@ void Element::display(bool visible)
 	{
 		broadcastSelectSelf();
 		broadcastData("element.style.diplay = '");
-		if(visible) broadcastData(defualDisplay);
+		if(visible) broadcastData(defaultDisplay);
 		else broadcastData('none');
 		broadcastData("';");
 		broadcastRun();
