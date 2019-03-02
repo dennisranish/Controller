@@ -226,11 +226,11 @@ void Controller::webSocketEvent(uint8_t num, WStype_t type, uint8_t * payload, s
 
 	if (type == WStype_CONNECTED)
 	{
-		for(int c = 0; c < singleController.size(); c++) singleController[c]->connectedEvent(num);
+		for(int c = 0; c < singleController.size(); c++) singleController[c]->handleConnectedEvent(num);
 	}
 	else if (type == WStype_DISCONNECTED)
 	{
-		for(int c = 0; c < singleController.size(); c++) singleController[c]->disconnectedEvent(num);
+		for(int c = 0; c < singleController.size(); c++) singleController[c]->handleDisconnectedEvent(num);
 	}
 	else if (type == WStype_TEXT)
 	{
