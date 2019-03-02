@@ -17,8 +17,16 @@ class SingleController : public Element
 
 		SingleController(int index, Controller * controller);
 		void add(Element * element);
-		template <typename T = Element> T * e(int index);
-		template <typename T = Element> T * e(char * name);
+		template <typename T = Element> T * e(int index)
+		{
+			return (T*)children[index];
+		}
+		template <typename T = Element> T * e(char * name)
+		{
+			for(int i = 0; i < children.size(); i++) if(children[i]->name == name) return (T*)children[i];
+			for(int i = 0; i < children.size(); i++) if(strcmp(children[i]->name, name) == 0) return (T*)children[i];
+			return NULL;
+		}
 		void remove(Element * element);
 
 	private:
