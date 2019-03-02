@@ -8,7 +8,7 @@ void Element::display(bool visible)
 		broadcastSelectSelf();
 		broadcastData("element.style.diplay = '");
 		if(visible) broadcastData(defaultDisplay);
-		else broadcastData('none');
+		else broadcastData("none");
 		broadcastData("';");
 		broadcastRun();
 		isVisible = visible;
@@ -81,7 +81,7 @@ void Element::handleConnectedEvent(uint8_t num)
 	{
 		broadcastSelectSelf();
 		broadcastData("element.style.diplay = '");
-		broadcastData('none');
+		broadcastData("none");
 		broadcastData("';");
 		broadcastRun();
 	}
