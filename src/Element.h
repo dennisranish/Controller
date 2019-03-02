@@ -42,10 +42,6 @@ class Element
 		void sendRun(uint8_t num);
 		void broadcastRun();
 
-		static void callConnectedEvent(Element * element, uint8_t num) {element->connectedEvent(num);}
-		static void callDataEvent(Element * element, uint8_t num, char * data) {element->dataEvent(num, data);}
-		static void callDisconnectedEvent(Element * element, uint8_t num) {element->disconnectedEvent(num);}
-
 	private:
 		void setController(Controller * newParentController);
 		void setSingleController(SingleController * newParentSingleController);
