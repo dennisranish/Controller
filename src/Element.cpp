@@ -3,7 +3,16 @@
 
 void Element::display(bool visible)
 {
-
+	if(isVisible != visible)
+	{
+		broadcastSelectSelf();
+		broadcastData("element.style.diplay = '");
+		if(visible) broadcastData(defualDisplay);
+		else broadcastData('none');
+		broadcastData("';");
+		broadcastRun();
+		isVisible = visible;
+	}
 }
 
 void Element::selectSelf(uint8_t num)
@@ -68,6 +77,14 @@ void Element::handleConnectedEvent(uint8_t num)
 {
 	connectedEvent(num);
 	for(int i = 0; i < children.size(); i++) children[i]->handleConnectedEvent(num);
+	if(!isVisible)
+	{
+		broadcastSelectSelf();
+		broadcastData("element.style.diplay = '");
+		broadcastData('none');
+		broadcastData("';");
+		broadcastRun();
+	}
 }
 
 void Element::parseData(uint8_t num, char * data)

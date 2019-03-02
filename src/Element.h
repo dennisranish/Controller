@@ -22,6 +22,7 @@ class Element
 		std::vector<char*> js;
 		char* defualDisplay = "block";
 		std::vector<Element*> children;
+		bool isVisible = true;
 
 		void selectSelf(uint8_t num);
 		void broadcastSelectSelf();
