@@ -64,6 +64,12 @@ void Element::removeChild(Element * element)
 	for(int i = 0; i < children.size(); i++) if(children[i] == element) children.erase(children.begin() + i--);
 }
 
+void Element::handleConnectedEvent(uint8_t num)
+{
+	connectedEvent(num);
+	for(int i = 0; i < children.size(); i++) children[i]->handleConnectedEvent(num);
+}
+
 void Element::parseData(uint8_t num, char * data)
 {
 	if(data[0] == 1)
@@ -78,6 +84,12 @@ void Element::parseData(uint8_t num, char * data)
 		dataEvent(num, data);
 	}
 	
+}
+
+void Element::handleDisconnectedEvent(uint8_t num)
+{
+	disconnectedEvent(num);
+	for(int i = 0; i < children.size(); i++) children[i]->handleDisconnectedEvent(num);
 }
 
 void Element::sendData(uint8_t num, char * data)

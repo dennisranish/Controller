@@ -49,8 +49,6 @@ void SingleController::connectedEvent(uint8_t num)
 		sendData(num, "element.setOwner(2);");
 		sendRun(num);
 	}
-
-	for(int i = 0; i < children.size(); i++) callConnectedEvent(children[i], num);
 }
 
 void SingleController::dataEvent(uint8_t num, char * data)
@@ -80,8 +78,6 @@ void SingleController::disconnectedEvent(uint8_t num)
 		broadcastData("element.setOwner(0);");
 		broadcastRun();
 	}
-
-	for(int i = 0; i < children.size(); i++) callDisconnectedEvent(children[i], num);
 }
 
 void SingleController::customSelect(uint8_t num, Element * element)

@@ -29,7 +29,9 @@ class Element
 		void addChild(Element * element);
 		void removeChild(Element * element);
 
+		void handleConnectedEvent(uint8_t num);
 		void parseData(uint8_t num, char * data);
+		void handleDisconnectedEvent(uint8_t num);
 
 		virtual void connectedEvent(uint8_t num) = 0;
 		virtual void dataEvent(uint8_t num, char * data) = 0;
