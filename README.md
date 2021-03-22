@@ -1,5 +1,9 @@
 # Controller
-An arduino library for creating web based controller that updates automaticaly throught websockets. It alowes for interactive ui that updates the server instantly. This library is desiged to work with esp8266 chipset.
+An Arduino library for creating web based game-style controllers to control an esp8266/esp32 using your phone or computer over wifi. No installation is required on the controlling device, a web page is sent when it connects to the server, and live two-way communication is done through websockets. The controller ui layout is fully customizable, including adding new interactive elements, and updating elements on the fly.
+
+This library is designed to work with esp8266/esp32 chipset, but may be able to work with other wifi enabled microcontrollers compatible with the Arduino IDE.
+
+[Video Demo](https://youtu.be/34rOOseLU-4)
 
 ## Installation
 1. Install [Arduino IDE](https://www.arduino.cc/en/Main/Software)
